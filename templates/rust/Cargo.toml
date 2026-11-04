@@ -1,0 +1,13 @@
+[package]
+name = "kit-sample-rs"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "app"
+path = "src/main.rs"
+
+[dependencies]
+# One small dependency so the lockfile/registry-cache pattern is exercised;
+# replace with your real dependency tree.
+tiny_http = "0.12"

@@ -1,0 +1,34 @@
+# Local development + one-command prod check (mirrors templates/node-ts).
+#
+#   docker compose up dev                   # go run on 127.0.0.1:3000
+#   docker compose --profile prod up prod   # static binary on 127.0.0.1:3001
+#
+# Hot reload: uncomment the Air RUN in the Dockerfile dev stage and change the
+# dev command to ["air", "-build.cmd", "go build -o /tmp/app .", ...] or keep
+# go run + restart. NOTE (parallel engines): don't publish the same Windows-side
+# port from both engines — change these ports if Docker Desktop uses 3000/3001.
+services:
+  dev:
+    build:
+      context: .
+      target: dev
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - .:/app                       # live source (keep the repo on ext4!)
+      - go-mod:/go/pkg/mod           # warm module cache across restarts
+      - go-build:/root/.cache/go-build
+    environment:
+      - PORT=3000
+
+  prod:
+    build:
+      context: .
+      target: prod
+    ports:
+      - "127.0.0.1:3001:3000"
+    profiles: ["prod"]
+
+volumes:
+  go-mod:
+  go-build:

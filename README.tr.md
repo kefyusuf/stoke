@@ -82,6 +82,8 @@ CI tarafı için aynı `CACHE_REF` değerini pipeline'a bağla — hazır şablo
 | `cache-stack/` | Yerel cache registry + pull-through mirror (compose) |
 | `templates/` | Genel multi-stage Dockerfile + cache uyumlu build sarmalayıcıları |
 | `templates/node-ts/` | Çalışan Node/TS örneği: prod + dev target'lar, pnpm store cache mount'ları, compose dev sunucusu |
+| `templates/rust/` | Çalışan Rust örneği: dummy-crate deps stage, cargo cache mount'ları, musl statik binary |
+| `templates/go/` | Çalışan Go örneği: GOMODCACHE/GOCACHE mount'ları, `scratch` prod imajı |
 | `ci/` | GitHub Actions (registry ve gha cache) ve GitLab CI şablonları |
 | `docs/` | Kanıtlar, derinlemesine rehberler, SSS |
 

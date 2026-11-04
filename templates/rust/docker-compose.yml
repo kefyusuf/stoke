@@ -1,0 +1,34 @@
+# Local development + one-command prod check (mirrors templates/node-ts).
+#
+#   docker compose up dev                   # cargo run on 127.0.0.1:3000
+#   docker compose --profile prod up prod   # static binary on 127.0.0.1:3001
+#
+# Hot reload: uncomment the cargo-watch RUN in the Dockerfile dev stage and
+# change the dev command to ["cargo", "watch", "-x", "run"].
+# NOTE (parallel engines): don't publish the same Windows-side port from both
+# engines — change these ports if Docker Desktop already uses 3000/3001.
+services:
+  dev:
+    build:
+      context: .
+      target: dev
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - .:/app                        # live source (keep the repo on ext4!)
+      - rust-target:/app/target       # persist compiled artifacts across restarts
+      - rust-registry:/usr/local/cargo/registry
+    environment:
+      - PORT=3000
+
+  prod:
+    build:
+      context: .
+      target: prod
+    ports:
+      - "127.0.0.1:3001:3000"
+    profiles: ["prod"]
+
+volumes:
+  rust-target:
+  rust-registry:

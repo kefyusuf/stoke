@@ -1,0 +1,5 @@
+# The build context should be tiny; target/ is never needed inside the image.
+target/
+.git/
+*.log
+.env

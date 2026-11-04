@@ -82,6 +82,8 @@ For CI, wire the same `CACHE_REF` into your pipeline — ready-made templates ar
 | `cache-stack/` | Local cache registry + pull-through mirror (compose) |
 | `templates/` | Generic multi-stage Dockerfile + cache-aware build wrappers |
 | `templates/node-ts/` | Runnable Node/TS sample: prod + dev targets, pnpm store cache mounts, compose dev server |
+| `templates/rust/` | Runnable Rust sample: dummy-crate deps stage, cargo cache mounts, musl static binary |
+| `templates/go/` | Runnable Go sample: GOMODCACHE/GOCACHE mounts, `scratch` prod image |
 | `ci/` | GitHub Actions (registry & gha cache) and GitLab CI templates |
 | `docs/` | Evidence, deep-dive guides, FAQ |
 
