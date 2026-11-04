@@ -11,9 +11,10 @@
 #   docker buildx build --target dev  -t myapp:dev .
 # Or via the kit's cache wrapper (shared local<->CI cache):
 #   CACHE_REF=127.0.0.1:5000/myapp:buildcache DOCKERFILE=Dockerfile ../build.sh
-ARG NODE_VERSION=22
 
-FROM node:${NODE_VERSION}-alpine AS base
+# Pinned (supply-chain hardening): bump tag+digest together via
+# `docker buildx imagetools inspect node:22-alpine`.
+FROM node:22-alpine@sha256:fe4f6d74e20370acb04ad889077d14d0f64a9c8ea6a42bc60cddf1e844699914 AS base
 ENV PNPM_HOME=/pnpm
 ENV PATH="/pnpm:$PATH"
 # Keep in sync with package.json "packageManager".
@@ -49,3 +50,5 @@ COPY --from=build /app/dist ./dist
 USER node
 EXPOSE 3000
 CMD ["pnpm", "start"]
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+  CMD wget -qO- "http://127.0.0.1:${PORT:-3000}/" >/dev/null 2>&1 || exit 1

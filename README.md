@@ -92,9 +92,9 @@ For CI, wire the same `CACHE_REF` into your pipeline — ready-made templates ar
 - [docs/evidence.md](docs/evidence.md) — every claim with sources ([TR](docs/evidence.tr.md))
 - [docs/setup-wsl2.md](docs/setup-wsl2.md) — manual WSL2 + Engine walkthrough ([TR](docs/setup-wsl2.tr.md))
 - [docs/cache-guide.md](docs/cache-guide.md) — BuildKit cache backends, `mode=max`, cache mounts ([TR](docs/cache-guide.tr.md))
-- [docs/registry-mirror.md](docs/registry-mirror.md) — pull-through mirror setup and its limits
-- [docs/nerdctl-variant.md](docs/nerdctl-variant.md) — containerd + nerdctl alternative path
-- [docs/faq.md](docs/faq.md) — troubleshooting (VMMEM, permissions, cache misses…)
+- [docs/registry-mirror.md](docs/registry-mirror.md) — pull-through mirror setup and its limits ([TR](docs/registry-mirror.tr.md))
+- [docs/nerdctl-variant.md](docs/nerdctl-variant.md) — containerd + nerdctl alternative path ([TR](docs/nerdctl-variant.tr.md))
+- [docs/faq.md](docs/faq.md) — troubleshooting (VMMEM, permissions, cache misses…) ([TR](docs/faq.tr.md))
 
 ## Requirements
 

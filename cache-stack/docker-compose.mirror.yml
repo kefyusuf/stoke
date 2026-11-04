@@ -6,13 +6,19 @@
 #   and: sudo systemctl restart docker
 services:
   mirror:
-    image: registry:2
+    image: registry:2@sha256:a3d8aaa63ed8681a604f1dea0aa03f100d5895b6a58ace528858a7b332415373
     container_name: kit-hub-mirror
     ports:
       - "127.0.0.1:5001:5000"
     volumes:
       - ./config/mirror-config.yml:/etc/distribution/config.yml:ro
       - kit-mirror-data:/var/lib/registry
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:5000/v2/"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
     restart: unless-stopped
 
 volumes:

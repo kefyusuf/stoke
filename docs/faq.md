@@ -1,5 +1,7 @@
 # FAQ / Troubleshooting
 
+Türkçe: [faq.tr.md](faq.tr.md)
+
 ## Resources & Windows side
 
 **Task Manager shows a huge `VMMEM` process.**
@@ -67,6 +69,12 @@ exactly that when `PUSH=0`.
 `registry-mirrors` in `/etc/docker/daemon.json` requires a daemon restart, only proxies
 Docker Hub, and only serves tags someone already pulled through it
 ([registry-mirror.md](registry-mirror.md)).
+
+**Need a mirror for multiple upstreams (ghcr.io, quay.io, …)?**
+The stock pull-through cache proxies exactly one registry. For multi-upstream or
+team-wide caching, graduate to [Harbor proxy cache](https://goharbor.io/docs/2.1.0/administration/configure-proxy-cache/)
+or [docker-registry-proxy](https://github.com/rpardini/docker-registry-proxy) —
+see the "Limits" section in [registry-mirror.md](registry-mirror.md).
 
 **Where did the intermediate-stage cache go in CI?**
 Default is `mode=min` (final stage only). This kit always sets `mode=max` — if you wrote

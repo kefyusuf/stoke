@@ -7,6 +7,8 @@
 # Two jobs on one base (GitLab `rules` cannot carry per-rule `script`):
 #   * default branch -> imports AND refreshes the shared buildcache ref
 #   * merge requests -> import only, so a broken MR can never poison main's cache
+#
+# Images are digest-pinned (supply-chain hardening) — bump tag+digest together.
 stages:
   - build
 
@@ -15,11 +17,12 @@ variables:
 
 .build-base:
   stage: build
-  image: docker:27
+  image: docker:27@sha256:aa3df78ecf320f5fafdce71c659f1629e96e9de0968305fe1de670e0ca9176ce
   services:
-    - docker:27-dind
+    - docker:27-dind@sha256:aa3df78ecf320f5fafdce71c659f1629e96e9de0968305fe1de670e0ca9176ce
   before_script:
-    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+    # --password-stdin: keep the secret out of the process list / logs.
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
     - docker buildx create --use --name kitbuilder
   after_script:
     - docker buildx rm kitbuilder || true

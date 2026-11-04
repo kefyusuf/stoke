@@ -28,13 +28,23 @@ info "Installing prerequisites"
 sudo apt-get update
 sudo apt-get install -y ca-certificates curl
 
-info "Adding Docker's official apt repository"
+info "Detecting distro for Docker's official apt repository"
+# ubuntu and debian have separate repo paths; a hard-coded ubuntu URL 404s on
+# Debian (apt-get update would fail) - decide from /etc/os-release.
+. /etc/os-release
+case "${ID:-}" in
+  ubuntu) DOCKER_REPO_PATH="linux/ubuntu" ;;
+  debian) DOCKER_REPO_PATH="linux/debian" ;;
+  *) warn "Unsupported distro: ${ID:-unknown}. This script supports Ubuntu and Debian."; exit 1 ;;
+esac
+[ -n "${VERSION_CODENAME:-}" ] || { warn "VERSION_CODENAME missing in /etc/os-release - cannot pick the apt repo."; exit 1; }
+
+info "Adding Docker's official apt repository ($ID / $VERSION_CODENAME)"
 sudo install -m 0755 -d /etc/apt/keyrings
-sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo curl -fsSL "https://download.docker.com/$DOCKER_REPO_PATH/gpg" -o /etc/apt/keyrings/docker.asc
 sudo chmod a+r /etc/apt/keyrings/docker.asc
 echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] \
-https://download.docker.com/linux/ubuntu \
-$(. /etc/os-release && echo "${VERSION_CODENAME:-noble}") stable" | \
+https://download.docker.com/$DOCKER_REPO_PATH $VERSION_CODENAME stable" | \
   sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
 info "Removing conflicting legacy packages (if any)"

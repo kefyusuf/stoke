@@ -92,9 +92,9 @@ CI tarafı için aynı `CACHE_REF` değerini pipeline'a bağla — hazır şablo
 - [docs/evidence.tr.md](docs/evidence.tr.md) — kaynaklı iddialar tablosu ([EN](docs/evidence.md))
 - [docs/setup-wsl2.tr.md](docs/setup-wsl2.tr.md) — WSL2 + Engine manuel kurulum ([EN](docs/setup-wsl2.md))
 - [docs/cache-guide.tr.md](docs/cache-guide.tr.md) — BuildKit cache backend'leri, `mode=max`, cache mount'lar ([EN](docs/cache-guide.md))
-- [docs/registry-mirror.md](docs/registry-mirror.md) — pull-through mirror kurulumu ve sınırları
-- [docs/nerdctl-variant.md](docs/nerdctl-variant.md) — containerd + nerdctl alternatif yolu
-- [docs/faq.md](docs/faq.md) — sorun giderme (VMMEM, izinler, cache ıskalamalar…)
+- [docs/registry-mirror.tr.md](docs/registry-mirror.tr.md) — pull-through mirror kurulumu ve sınırları ([EN](docs/registry-mirror.md))
+- [docs/nerdctl-variant.tr.md](docs/nerdctl-variant.tr.md) — containerd + nerdctl alternatif yolu ([EN](docs/nerdctl-variant.md))
+- [docs/faq.tr.md](docs/faq.tr.md) — sorun giderme (VMMEM, izinler, cache ıskalamalar…) ([EN](docs/faq.md))
 
 ## Gereksinimler
 

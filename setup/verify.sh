@@ -72,6 +72,10 @@ docker rmi kit-verify:local >/dev/null 2>&1 || true
 info "Test 2/2: registry cache round trip (the local<->CI mechanism)"
 
 PORT="${KIT_VERIFY_PORT:-$(( (RANDOM % 20000) + 30000 ))}"
+# Guard: KIT_VERIFY_PORT is operator input flowing into a docker arg — keep it numeric.
+case "$PORT" in
+  ''|*[!0-9]*) fail "KIT_VERIFY_PORT must be a plain port number, got: '$PORT'"; exit 1 ;;
+esac
 REG_NAME="kit-verify-registry-$$"
 BUILDER_A="kit-verify-a-$$"
 BUILDER_B="kit-verify-b-$$"
@@ -80,6 +84,7 @@ cleanup() {
   docker buildx rm "$BUILDER_B" >/dev/null 2>&1 || true
   docker rm -f "$REG_NAME" >/dev/null 2>&1 || true
   docker rmi "127.0.0.1:$PORT/kit-verify:cache" >/dev/null 2>&1 || true
+  rm -rf "$WORK"
 }
 trap cleanup EXIT
 
@@ -101,8 +106,8 @@ docker buildx build \
   --builder "$BUILDER_A" \
   --progress=plain \
   --cache-to "type=registry,ref=127.0.0.1:${PORT}/kit-verify:cache,mode=max" \
-  "$WORK" > /tmp/kit-verify-a.log 2>&1 \
-  || { fail "builder A: cache export failed (log: /tmp/kit-verify-a.log)"; exit 1; }
+  "$WORK" > "$WORK/a.log" 2>&1 \
+  || { fail "builder A: cache export failed (log kept below)"; tail -20 "$WORK/a.log" || true; exit 1; }
 ok "builder A exported cache to the registry (mode=max)"
 
 # Builder B: a brand-new builder with an empty local store -> must pull cache-from.
@@ -111,14 +116,15 @@ docker buildx build \
   --builder "$BUILDER_B" \
   --progress=plain \
   --cache-from "type=registry,ref=127.0.0.1:${PORT}/kit-verify:cache" \
-  "$WORK" > /tmp/kit-verify-b.log 2>&1 \
-  || { fail "builder B: cache import failed (log: /tmp/kit-verify-b.log)"; exit 1; }
+  "$WORK" > "$WORK/b.log" 2>&1 \
+  || { fail "builder B: cache import failed (log kept below)"; tail -20 "$WORK/b.log" || true; exit 1; }
 
-if grep -q "CACHED" /tmp/kit-verify-b.log; then
+if grep -q "CACHED" "$WORK/b.log"; then
   ok "builder B (fresh, empty store) hit CACHED layers via --cache-from registry"
   ok "=> cross-machine cache reuse (local <-> CI) works on this machine"
 else
-  fail "builder B found no CACHED layers - registry cache round trip broken (log: /tmp/kit-verify-b.log)"
+  fail "builder B found no CACHED layers - registry cache round trip broken (log kept below)"
+  tail -30 "$WORK/b.log" || true
 fi
 
 # --- summary -------------------------------------------------------------------

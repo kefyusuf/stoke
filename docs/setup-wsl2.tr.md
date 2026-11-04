@@ -88,7 +88,9 @@ sudo systemctl enable --now docker
 sudo usermod -aG docker "$USER"   # sonrasında çık-gir yap veya `newgrp docker`
 ```
 
-Resmî kaynak: [Docker — Ubuntu'ya kurulum](https://docs.docker.com/engine/install/ubuntu/).
+**Debian**'da her iki URL'de `linux/ubuntu` yerine `linux/debian` yaz (repo
+anahtarı ve apt kaynağı distro başına ayrıdır). Resmî kaynak:
+[Docker — Ubuntu'ya kurulum](https://docs.docker.com/engine/install/ubuntu/).
 
 ## 6. Sağlık kontrolü
 

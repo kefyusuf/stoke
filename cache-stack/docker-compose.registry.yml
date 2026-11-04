@@ -9,12 +9,18 @@
 # registry (GHCR, GitLab registry, ...) as CACHE_REF — see ci/ templates.
 services:
   registry:
-    image: registry:2
+    image: registry:2@sha256:a3d8aaa63ed8681a604f1dea0aa03f100d5895b6a58ace528858a7b332415373
     container_name: kit-cache-registry
     ports:
       - "127.0.0.1:5000:5000"
     volumes:
       - kit-registry-data:/var/lib/registry
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:5000/v2/"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
     restart: unless-stopped
 
 volumes:

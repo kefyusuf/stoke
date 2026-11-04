@@ -2,28 +2,30 @@
 # Go template for wsl2-docker-cache-kit — prod + dev targets.
 #
 # Cache design (docs/cache-guide.md):
-#   * go mod download with a GOMODCACHE cache mount -> modules never re-download.
-#   * GOCACHE cache mount -> incremental compilation across builds, locally and
-#     in CI (shared registry cache, mode=max).
+#   * deps stage runs `go mod download` INTO AN IMAGE LAYER — layer cache IS
+#     exported by `--cache-to type=registry,mode=max`, so a fresh CI builder
+#     reuses the module cache. Source edits re-download nothing.
+#   * GOCACHE stays a cache mount: compile cache is builder-local (mounts are
+#     NOT exported) and cheap to rebuild — Go compiles fast enough that this
+#     only affects local incremental rebuilds.
 #   * CGO_ENABLED=0 -> static binary; prod stage is literally `scratch`.
-ARG GO_VERSION=1
 
-FROM golang:${GO_VERSION}-alpine AS base
+# Pinned (supply-chain hardening): bump tag+digest together via
+# `docker buildx imagetools inspect golang:1-alpine`.
+FROM golang:1-alpine@sha256:d200d2dd76b03a99b52651fd1325aff7dcd35422c35c01bac56571b0507f3deb AS base
 WORKDIR /app
 ENV CGO_ENABLED=0
 
-# --- deps: module download (the shared cache key) --------------------------------
+# --- deps: module download INTO THE LAYER (the shared cache key) -----------------
 FROM base AS deps
 COPY go.mod go.sum* ./
-RUN --mount=type=cache,id=gomod,target=/go/pkg/mod \
-    go mod download
+RUN go mod download
 
 # --- dev: bind-mount source (compose), go run -------------------------------------
 FROM deps AS dev
 COPY . .
 # Hot reload (optional): uncomment to add Air, then CMD below:
 # RUN --mount=type=cache,id=gobuild,target=/root/.cache/go-build \
-#     --mount=type=cache,id=gomod,target=/go/pkg/mod \
 #     go install github.com/air-verse/air@v1.52.3
 EXPOSE 3000
 CMD ["go", "run", "."]
@@ -32,10 +34,13 @@ CMD ["go", "run", "."]
 FROM deps AS build
 COPY . .
 RUN --mount=type=cache,id=gobuild,target=/root/.cache/go-build \
-    --mount=type=cache,id=gomod,target=/go/pkg/mod \
     go build -trimpath -ldflags="-s -w" -o /out/app .
 
 # --- prod: scratch + static binary, non-root ----------------------------------------
+# NOTE: no HEALTHCHECK is possible in `scratch` — there is no shell, wget or
+# curl inside. If you need one, add a tiny statically-built healthcheck helper
+# binary, or let your orchestrator (compose healthcheck with a sidecar,
+# Kubernetes probes) do the probing.
 FROM scratch AS prod
 COPY --from=build /out/app /app
 COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/

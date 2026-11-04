@@ -1,5 +1,7 @@
 # Optional variant: containerd + nerdctl
 
+Türkçe: [nerdctl-variant.tr.md](nerdctl-variant.tr.md)
+
 The kit's default is Docker Engine because its CLI/buildx compatibility is the broadest.
 If you want to go one step lighter and sit directly on **containerd** (the runtime Docker
 itself uses, and Kubernetes' default since the dockershim removal), `setup/setup-nerdctl.sh`

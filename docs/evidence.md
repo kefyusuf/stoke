@@ -79,6 +79,20 @@ hardware.
   [pnpm discussion #6374](https://github.com/orgs/pnpm/discussions/6374)
 - General: key cache entries on lockfile hashes, use `--frozen-lockfile` in CI.
 
+## This kit's own measurements
+
+Recorded 2026-11-04 on the kit author's machine — **Windows 11 host, WSL2 Ubuntu-24.04
+distro, Docker Engine 29.9.3 inside the distro**. Single machine, indicative numbers;
+rerun `setup/verify.sh` on yours and compare.
+
+| What | Result |
+|---|---|
+| `verify.sh` layer-cache speedup | **7×** — warm build 1.3 s vs cold build (incl. base pull) |
+| `verify.sh` registry round trip | Builder B (fresh, empty store) hit **CACHED** via `--cache-from` — tested twice: under Docker Desktop 29.9.2 and under the in-distro Engine 29.9.3 |
+| Stack templates | **node-ts, rust, go: all 6 targets (prod+dev) built; 3 prod containers answered HTTP 200** in the WSL engine |
+| Real migration | Docker Desktop → Engine-in-WSL2 performed live; both engines ran in parallel during the overlap |
+| Bugs the live runs caught | Rust dummy-binary mtime trap (silent stale binary — exit 0, no server) and the cache-mount-does-not-persist trap; both fixed in the templates |
+
 ## Self-verification
 
 ```bash

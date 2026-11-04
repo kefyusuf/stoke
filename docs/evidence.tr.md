@@ -78,6 +78,20 @@ yeniden üretir.
   [pnpm tartışması #6374](https://github.com/orgs/pnpm/discussions/6374)
 - Genel kural: cache anahtarını lockfile hash'ine bağla, CI'da `--frozen-lockfile` kullan.
 
+## Bu kitin kendi ölçümleri
+
+2026-11-04'te kit yazarının makinesinde kaydedildi — **Windows 11 host, WSL2
+Ubuntu-24.04 distro, distro içinde Docker Engine 29.9.3**. Tek makine, yol gösterici
+rakamlar; `setup/verify.sh`'i kendi makinenizde koşup karşılaştırın.
+
+| Ne | Sonuç |
+|---|---|
+| `verify.sh` katman-cache hızlanması | **7x** — warm build 1.3 sn vs cold build (base pull dahil) |
+| `verify.sh` registry round trip | Builder B (taze, boş store) `--cache-from` ile **CACHED** — iki kez test edildi: Docker Desktop 29.9.2 altında ve distro içi Engine 29.9.3 altında |
+| Stack şablonları | **node-ts, rust, go: 6 target'ın tamamı (prod+dev) build edildi; 3 prod konteyneri WSL motorunda HTTP 200 yanıtladı** |
+| Gerçek geçiş | Docker Desktop → WSL2-içi Engine canlı yapıldı; örtüşme döneminde iki motor paralel çalıştı |
+| Canlı koşuların yakaladığı hatalar | Rust dummy-binary mtime tuzağı (sessiz bayat binary — exit 0, sunucu yok) ve cache-mount katmana yazılmaz tuzağı; ikisi de şablonlarda düzeltildi |
+
 ## Kendi kendini doğrulama
 
 ```bash

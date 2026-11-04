@@ -1,5 +1,7 @@
 # Registry pull-through mirror
 
+Türkçe: [registry-mirror.tr.md](registry-mirror.tr.md)
+
 Base images (`alpine`, `node`, `python`, …) get re-downloaded by every developer and
 every CI runner. A pull-through mirror keeps one local copy: first pull fetches from
 Docker Hub and caches it, everyone else pulls from the mirror.

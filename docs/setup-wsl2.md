@@ -88,7 +88,9 @@ sudo systemctl enable --now docker
 sudo usermod -aG docker "$USER"   # log out/in afterwards, or `newgrp docker`
 ```
 
-Upstream reference: [Docker — install on Ubuntu](https://docs.docker.com/engine/install/ubuntu/).
+On **Debian**, swap `linux/ubuntu` for `linux/debian` in both URLs (the repo key
+and apt source are separate per distro). Upstream reference:
+[Docker — install on Ubuntu](https://docs.docker.com/engine/install/ubuntu/).
 
 ## 6. Sanity check
 
