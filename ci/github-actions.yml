@@ -1,0 +1,66 @@
+# GitHub Actions — platform-independent shared cache (registry backend).
+#
+# The cache ref lives in GHCR next to your image, so local builds and CI share
+# the SAME ref: set CACHE_REF to the same value in templates/build.sh locally.
+#
+# Two conditional build steps:
+#   * push to main    -> imports AND refreshes the shared buildcache ref
+#   * pull requests   -> import only, so a broken PR can never poison main's cache
+#                        (fork PRs can't push to GHCR anyway)
+#
+# Adjust: the `file:` path, `tags:`, and the cache ref naming as you like.
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}          # ghcr.io/<org>/<repo>
+  CACHE_REF: ghcr.io/${{ github.repository }}:buildcache
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build (PR — import cache only)
+        if: github.event_name == 'pull_request'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile                    # TODO: your Dockerfile path
+          push: false
+          cache-from: type=registry,ref=${{ env.CACHE_REF }}
+
+      - name: Build (main — import + refresh shared cache)
+        if: github.event_name != 'pull_request'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile                    # TODO: your Dockerfile path
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          cache-from: type=registry,ref=${{ env.CACHE_REF }}
+          cache-to: type=registry,ref=${{ env.CACHE_REF }},mode=max
+
+# Notes:
+# - GHCR cache manifests are private like images; GITHUB_TOKEN covers same-repo.
+# - Want GitHub-native caching instead (no registry, fork-PR friendly, but
+#   GitHub-only)? See github-actions-gha.yml.

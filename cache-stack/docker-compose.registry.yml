@@ -1,0 +1,21 @@
+# Local cache registry — where BuildKit cache manifests (and optionally your dev
+# images) live on this machine. 127.0.0.0/8 targets are insecure-by-default in
+# Docker, so plain HTTP works without TLS setup.
+#
+#   docker compose -f cache-stack/docker-compose.registry.yml up -d
+#   -> cache refs look like:  127.0.0.1:5000/myapp:buildcache
+#
+# CI cannot reach this registry (it binds to loopback). For CI, use a shared
+# registry (GHCR, GitLab registry, ...) as CACHE_REF — see ci/ templates.
+services:
+  registry:
+    image: registry:2
+    container_name: kit-cache-registry
+    ports:
+      - "127.0.0.1:5000:5000"
+    volumes:
+      - kit-registry-data:/var/lib/registry
+    restart: unless-stopped
+
+volumes:
+  kit-registry-data:

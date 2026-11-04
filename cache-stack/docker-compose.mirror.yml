@@ -1,0 +1,19 @@
+# Pull-through cache mirror for Docker Hub base images (serves on 127.0.0.1:5001).
+# Read-only, single-upstream (Docker Hub) — see docs/registry-mirror.md for limits.
+#
+#   docker compose -f cache-stack/docker-compose.mirror.yml up -d
+#   then point the daemon at it: templates/daemon-mirror.json -> /etc/docker/daemon.json
+#   and: sudo systemctl restart docker
+services:
+  mirror:
+    image: registry:2
+    container_name: kit-hub-mirror
+    ports:
+      - "127.0.0.1:5001:5000"
+    volumes:
+      - ./config/mirror-config.yml:/etc/distribution/config.yml:ro
+      - kit-mirror-data:/var/lib/registry
+    restart: unless-stopped
+
+volumes:
+  kit-mirror-data:

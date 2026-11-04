@@ -1,0 +1,16 @@
+# OS junk
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Local tool artifacts (security-scan plugin session state)
+.mimosa/
+
+# Local overrides of the templates (per-machine tweaks)
+setup/local-*
+*.wslconfig.bak
+daemon.json.bak
+
+# Scratch dirs used while benchmarking
+.tmp/
+*.log

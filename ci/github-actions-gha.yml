@@ -1,0 +1,32 @@
+# GitHub Actions — GitHub-native cache backend variant (type=gha).
+#
+# No registry login needed and works on fork PRs, but it is GitHub-only:
+# - cache lives in GitHub's cache storage (10 GB per repo, LRU eviction)
+# - cache does NOT cross repos; fork PRs get their own scope
+# - slightly slower than registry cache for large graphs (tarball round trip)
+#
+# Local builds CANNOT share this cache (it's CI-only). If local<->CI sharing
+# matters, use ci/github-actions.yml (type=registry) instead.
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build (with gha cache)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile            # TODO: your Dockerfile path
+          push: false                   # add your push/tags step as needed
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

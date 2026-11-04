@@ -1,0 +1,62 @@
+# GitLab CI — registry cache via docker:dind, against the GitLab container registry.
+#
+# Local builds share the same ref: point CACHE_REF in templates/build.sh at
+# <registry>/<group>/<project>:buildcache and log in once locally.
+# Requires a runner with the docker executor and privileged: true (for dind).
+#
+# Two jobs on one base (GitLab `rules` cannot carry per-rule `script`):
+#   * default branch -> imports AND refreshes the shared buildcache ref
+#   * merge requests -> import only, so a broken MR can never poison main's cache
+stages:
+  - build
+
+variables:
+  DOCKER_TLS_CERTDIR: "/certs"
+
+.build-base:
+  stage: build
+  image: docker:27
+  services:
+    - docker:27-dind
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+    - docker buildx create --use --name kitbuilder
+  after_script:
+    - docker buildx rm kitbuilder || true
+
+build:default-branch:
+  extends: .build-base
+  variables:
+    IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+    CACHE_REF: $CI_REGISTRY_IMAGE:buildcache
+  script:
+    - >
+      docker buildx build
+      --file ./Dockerfile
+      --cache-from type=registry,ref=$CACHE_REF
+      --cache-to type=registry,ref=$CACHE_REF,mode=max
+      --push
+      -t "$IMAGE"
+      .
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+build:merge-request:
+  extends: .build-base
+  variables:
+    IMAGE: $CI_REGISTRY_IMAGE:mr-$CI_MERGE_REQUEST_IID
+    CACHE_REF: $CI_REGISTRY_IMAGE:buildcache
+  script:
+    - >
+      docker buildx build
+      --file ./Dockerfile
+      --cache-from type=registry,ref=$CACHE_REF
+      --push
+      -t "$IMAGE"
+      .
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+
+# Notes:
+# - If your registry is self-hosted over plain HTTP, add it to dind's
+#   insecure-registries (see docs/faq.md).

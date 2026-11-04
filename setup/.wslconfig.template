@@ -1,0 +1,22 @@
+# Template for %UserProfile%\.wslconfig  (Windows-side settings for the WSL2 VM)
+# Reference: https://learn.microsoft.com/en-us/windows/wsl/wsl-config
+# Applied after: wsl --shutdown
+
+[wsl2]
+# Hard cap for the whole utility VM. Shows in Task Manager as "VMMEM".
+# Without this, WSL2 may take 50-80% of host RAM.
+# Rule of thumb: 1/3 - 1/2 of host RAM; leave the rest to Windows/browser.
+memory=6GB
+
+# Logical cores visible to the VM. Keep a couple for Windows.
+processors=4
+
+# Virtual swap size.
+swap=2GB
+
+[experimental]
+# WSL 2.0+: gradually return idle cached memory back to Windows.
+autoMemoryReclaim=gradual
+
+# WSL 2.0+: shrink the ext4 virtual disk file after large deletions.
+sparseVhd=true
