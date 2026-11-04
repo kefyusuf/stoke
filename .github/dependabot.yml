@@ -1,0 +1,29 @@
+# Dependabot keeps the pinned things pinned-and-fresh:
+#   * github-actions  -> bump the SHA-pinned actions (comments keep the tag)
+#   * docker          -> bump the digest-pinned base images (tag+digest together)
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: docker
+    directory: /templates
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: docker
+    directory: /templates/node-ts
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: docker
+    directory: /templates/rust
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: docker
+    directory: /templates/go
+    schedule:
+      interval: weekly

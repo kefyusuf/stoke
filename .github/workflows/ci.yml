@@ -1,0 +1,95 @@
+# CI — the kit eating its own dogfood: lint, parse, and actually build every
+# shipped template on every push. The template builds use the type=gha cache
+# with mode=max — the same pattern the kit teaches, exercised for real.
+#
+# Actions are SHA-pinned (supply-chain hardening); trailing comments carry the
+# major tag. Bump via the dependabot github-actions ecosystem.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: shellcheck (all shipped scripts, style severity)
+        run: |
+          docker run --rm -v "$PWD:/wk" koalaman/shellcheck:stable \
+            --severity=style setup/*.sh templates/build.sh
+
+      - name: bash -n (syntax)
+        run: for f in setup/*.sh templates/build.sh; do bash -n "$f"; done
+
+      - name: YAML parse (compose files, CI templates, mirror config)
+        run: |
+          python3 -c "import yaml" 2>/dev/null || pip install -q pyyaml
+          python3 - <<'EOF'
+          import pathlib, sys, yaml
+          files = list(pathlib.Path(".").rglob("*.yml"))
+          for f in files:
+              yaml.safe_load(f.read_text(encoding="utf-8"))
+              print(f"OK  {f}")
+          print(f"{len(files)} YAML file(s) parsed")
+          EOF
+
+      - name: markdown relative links
+        run: |
+          python3 - <<'EOF'
+          import pathlib, re, sys
+          bad = 0
+          for md in pathlib.Path(".").rglob("*.md"):
+              for m in re.finditer(r'\]\(([^)#]+?)(?:#[^)]*)?\)', md.read_text(encoding="utf-8")):
+                  link = m.group(1)
+                  if link.startswith(("http://", "https://", "mailto:")) or link == "":
+                      continue
+                  if not (md.parent / link).resolve().exists():
+                      print(f"BAD link : {md} -> {link}"); bad += 1
+          sys.exit(1 if bad else 0)
+          EOF
+
+  templates:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write   # buildkit type=gha cache export
+    strategy:
+      fail-fast: false
+      matrix:
+        template: [node-ts, rust, go]
+        target: [prod, dev]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+
+      - name: Build ${{ matrix.template }} (${{ matrix.target }})
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: ./templates/${{ matrix.template }}
+          push: false
+          load: ${{ matrix.target == 'prod' }}
+          tags: kit-${{ matrix.template }}:${{ matrix.target }}
+          cache-from: type=gha,scope=kit-${{ matrix.template }}-${{ matrix.target }}
+          cache-to: type=gha,mode=max,scope=kit-${{ matrix.template }}-${{ matrix.target }}
+
+      # The kit's own promise, exercised in CI: the prod image actually serves.
+      - name: Smoke (prod serves HTTP)
+        if: matrix.target == 'prod'
+        run: |
+          docker run -d --rm --name kit-smoke-${{ matrix.template }} \
+            -p 127.0.0.1:3210:3000 "kit-${{ matrix.template }}:prod"
+          ok=""
+          for i in $(seq 1 30); do
+            if curl -sf http://127.0.0.1:3210/ | grep -q '"ok":true'; then ok=1; break; fi
+            sleep 1
+          done
+          [ -n "$ok" ] || { docker logs kit-smoke-${{ matrix.template }} || true; exit 1; }
+          echo "smoke OK: $(curl -s http://127.0.0.1:3210/)"
+          docker stop "kit-smoke-${{ matrix.template }}" >/dev/null

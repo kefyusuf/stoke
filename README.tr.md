@@ -4,6 +4,15 @@
 
 English README: [README.md](README.md)
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+<!-- CI badge — GitHub reposunu oluşturunca yorumdan çıkar (<owner> yerine):
+[![ci](https://github.com/<owner>/wsl2-docker-cache-kit/actions/workflows/ci.yml/badge.svg)](https://github.com/<owner>/wsl2-docker-cache-kit/actions/workflows/ci.yml)
+-->
+
+> ⚠️ **Çalıştırmadan önce okuyun.** Bu scriptler sistem düzeyinde değişiklik yapar
+> (Windows özellikleri, WSL içi apt/systemd, root sahipli dosyalar). Amaçlanan akış
+> oku-sonra-koştur — her scriptin neye dokunduğu: [SECURITY.md](SECURITY.md).
+
 ## Neden
 
 | Sorun | Bu kit |
@@ -15,6 +24,32 @@ English README: [README.md](README.md)
 | Docker Desktop 250+ çalışan veya 10M$+ ciroya lisans ister | Docker Engine Apache-2.0 — lisans derdi yok |
 
 Tüm iddiaların kaynakları: [docs/evidence.tr.md](docs/evidence.tr.md)
+
+## Kanıt — kaydedilmiş çıktılar
+
+<details>
+<summary>Gerçek bir verify.sh koşusunun çıktısı (WSL motoru, 2026-11-04)</summary>
+
+```text
+  PASS  warm build: 1308 ms
+  PASS  layer cache speedup: 7x (warm < cold)
+  PASS  builder A exported cache to the registry (mode=max)
+  PASS  builder B (fresh, empty store) hit CACHED layers via --cache-from registry
+  PASS  => cross-machine cache reuse (local <-> CI) works on this machine
+
+  ALL CHECKS PASSED - this machine is cache-ready.
+```
+</details>
+
+<details>
+<summary>Üç şablonun tamamı: build edildi ve smoke testi geçti (prod konteynerleri HTTP)</summary>
+
+```text
+--- node-ts prod: {"ok":true,"stack":"node-ts","time":"2026-11-04T16:54:16.714Z"}
+--- rust  prod:   {"ok":true,"stack":"rust","epoch":1793812091}
+--- go    prod:   {"ok":true,"stack":"go","time":"2026-11-04T17:08:23Z"}
+```
+</details>
 
 ## Mimari
 

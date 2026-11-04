@@ -68,15 +68,15 @@ check() {
   elif [ -z "$SOCKET_LINK" ] && [ -S "$SOCKET" ]; then
     ok "socket is a real local socket (ours)"
   elif [ -e "$SOCKET" ]; then
-    warn "socket is neither ours nor visibly hijacked: $(ls -l "$SOCKET" | awk '{print $1, $NF}')"
+    warn "socket is neither ours nor visibly hijacked: $(stat -c '%A %N' "$SOCKET")"
   else
     warn "socket not present (engine not running?)"
   fi
   if [ -n "$DESKTOP_UNITS" ]; then
-    note_fail "Desktop integration units present: $(basename -a $DESKTOP_UNITS | tr '\n' ' ')"
+    note_fail "Desktop integration units present: $(echo "$DESKTOP_UNITS" | sed -e 's|.*/||' | tr '\n' ' ')"
   fi
   if [ -n "$DESKTOP_SYMLINKS" ]; then
-    note_fail "Desktop CLI symlinks present: $(basename -a $DESKTOP_SYMLINKS | tr '\n' ' ')"
+    note_fail "Desktop CLI symlinks present: $(echo "$DESKTOP_SYMLINKS" | sed -e 's|.*/||' | tr '\n' ' ')"
   fi
   echo ""
   if [ "$failures" -eq 0 ]; then
@@ -122,7 +122,7 @@ fix() {
 
   if [ -n "$DESKTOP_SYMLINKS" ]; then
     info "removing Desktop CLI symlinks"
-    rm -f $DESKTOP_SYMLINKS
+    while IFS= read -r f; do rm -f "$f"; done <<< "$DESKTOP_SYMLINKS"
   fi
 
   if [[ "$SOCKET_LINK" == *"docker-desktop"* ]]; then

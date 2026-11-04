@@ -31,6 +31,7 @@ sudo apt-get install -y ca-certificates curl
 info "Detecting distro for Docker's official apt repository"
 # ubuntu and debian have separate repo paths; a hard-coded ubuntu URL 404s on
 # Debian (apt-get update would fail) - decide from /etc/os-release.
+# shellcheck disable=SC1091  # system file, exists on every apt distro
 . /etc/os-release
 case "${ID:-}" in
   ubuntu) DOCKER_REPO_PATH="linux/ubuntu" ;;

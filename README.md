@@ -4,6 +4,15 @@
 
 Türkçe README: [README.tr.md](README.tr.md)
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+<!-- CI badge — un-comment after creating the GitHub repo (replace <owner>):
+[![ci](https://github.com/<owner>/wsl2-docker-cache-kit/actions/workflows/ci.yml/badge.svg)](https://github.com/<owner>/wsl2-docker-cache-kit/actions/workflows/ci.yml)
+-->
+
+> ⚠️ **Review before running.** These scripts make system-level changes (Windows
+> features, apt/systemd inside WSL, root-owned files). The intended workflow is
+> read-then-run — [SECURITY.md](SECURITY.md) lists exactly what each script touches.
+
 ## Why
 
 | Problem | This kit |
@@ -15,6 +24,32 @@ Türkçe README: [README.tr.md](README.tr.md)
 | Docker Desktop needs a paid license at 250+ employees or $10M+ revenue | Docker Engine is Apache-2.0 — nothing to license |
 
 Full claim-by-claim citations: [docs/evidence.md](docs/evidence.md)
+
+## Proof, captured
+
+<details>
+<summary>Real output from a verify.sh run (WSL engine, 2026-11-04)</summary>
+
+```text
+  PASS  warm build: 1308 ms
+  PASS  layer cache speedup: 7x (warm < cold)
+  PASS  builder A exported cache to the registry (mode=max)
+  PASS  builder B (fresh, empty store) hit CACHED layers via --cache-from registry
+  PASS  => cross-machine cache reuse (local <-> CI) works on this machine
+
+  ALL CHECKS PASSED - this machine is cache-ready.
+```
+</details>
+
+<details>
+<summary>All three templates, built and smoke-tested (prod containers over HTTP)</summary>
+
+```text
+--- node-ts prod: {"ok":true,"stack":"node-ts","time":"2026-11-04T16:54:16.714Z"}
+--- rust  prod:   {"ok":true,"stack":"rust","epoch":1793812091}
+--- go    prod:   {"ok":true,"stack":"go","time":"2026-11-04T17:08:23Z"}
+```
+</details>
 
 ## Architecture
 
