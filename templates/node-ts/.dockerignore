@@ -1,0 +1,7 @@
+# Build context should stay tiny — this is the other half of cache speed.
+node_modules
+dist
+.git
+*.log
+.env
+.env.*

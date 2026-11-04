@@ -81,6 +81,7 @@ CI tarafı için aynı `CACHE_REF` değerini pipeline'a bağla — hazır şablo
 | `setup/verify.sh` | Smoke test + cache benchmark (ilk ve ikinci build) |
 | `cache-stack/` | Yerel cache registry + pull-through mirror (compose) |
 | `templates/` | Genel multi-stage Dockerfile + cache uyumlu build sarmalayıcıları |
+| `templates/node-ts/` | Çalışan Node/TS örneği: prod + dev target'lar, pnpm store cache mount'ları, compose dev sunucusu |
 | `ci/` | GitHub Actions (registry ve gha cache) ve GitLab CI şablonları |
 | `docs/` | Kanıtlar, derinlemesine rehberler, SSS |
 

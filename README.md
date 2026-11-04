@@ -81,6 +81,7 @@ For CI, wire the same `CACHE_REF` into your pipeline — ready-made templates ar
 | `setup/verify.sh` | Smoke test + cache benchmark (first vs second build) |
 | `cache-stack/` | Local cache registry + pull-through mirror (compose) |
 | `templates/` | Generic multi-stage Dockerfile + cache-aware build wrappers |
+| `templates/node-ts/` | Runnable Node/TS sample: prod + dev targets, pnpm store cache mounts, compose dev server |
 | `ci/` | GitHub Actions (registry & gha cache) and GitLab CI templates |
 | `docs/` | Evidence, deep-dive guides, FAQ |
 

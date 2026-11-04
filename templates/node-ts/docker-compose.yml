@@ -1,0 +1,31 @@
+# Local development with hot reload (dev target) + a one-command prod check.
+#
+#   docker compose up dev          # http://127.0.0.1:3000  (hot reload)
+#   docker compose --profile prod up prod   # http://127.0.0.1:3001 (compiled)
+#
+# NOTE (parallel engines): if your Docker Desktop engine already publishes
+# 3000/3001, change these ports — two engines must not publish the same
+# Windows-side port.
+services:
+  dev:
+    build:
+      context: .
+      target: dev
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - .:/app                       # live source (keep the repo on ext4!)
+      - node_modules:/app/node_modules  # keep the image's installed deps
+    environment:
+      - PORT=3000
+
+  prod:
+    build:
+      context: .
+      target: prod
+    ports:
+      - "127.0.0.1:3001:3000"
+    profiles: ["prod"]
+
+volumes:
+  node_modules:
