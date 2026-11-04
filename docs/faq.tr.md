@@ -2,6 +2,11 @@
 
 ## Kaynaklar ve Windows tarafı
 
+**Docker Desktop kurulu kalabilir mi?**
+Evet — kurulu-ama-kapalı (otomatik başlatma ve WSL entegrasyonu kapalı) ya da kitin
+motoruyla tam paralel. Kontrol listesi, port kuralları ve geri dönüş:
+[migration.tr.md](migration.tr.md).
+
 **Task Manager'da kocaman bir `VMMEM` süreci görüyorum.**
 O, WSL2 VM'inizin kendisidir. `.wslconfig` (`memory=`) ile sınırlandırılır. Sınıra
 oturuyorsa sınırı düşürün; sınır yüksek ama VMMEM günler içinde tırmanıyorsa

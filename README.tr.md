@@ -70,6 +70,10 @@ Yerel build → cache'i paylaşımlı ref'e yazar. CI o ref'i sıcak cache olara
 
 CI tarafı için aynı `CACHE_REF` değerini pipeline'a bağla — hazır şablonlar [`ci/`](ci/) klasöründe.
 
+> **Docker Desktop kalsın mı?** Kaldırmak zorunda değilsin. Kurulu-ama-kapalı veya tam
+> paralel ikisi de çalışır — kontrol listesi, port kuralları ve geri dönüş:
+> [docs/migration.tr.md](docs/migration.tr.md).
+
 ## Repo haritası
 
 | Yol | Amaç |
@@ -94,6 +98,7 @@ CI tarafı için aynı `CACHE_REF` değerini pipeline'a bağla — hazır şablo
 - [docs/cache-guide.tr.md](docs/cache-guide.tr.md) — BuildKit cache backend'leri, `mode=max`, cache mount'lar ([EN](docs/cache-guide.md))
 - [docs/registry-mirror.tr.md](docs/registry-mirror.tr.md) — pull-through mirror kurulumu ve sınırları ([EN](docs/registry-mirror.md))
 - [docs/nerdctl-variant.tr.md](docs/nerdctl-variant.tr.md) — containerd + nerdctl alternatif yolu ([EN](docs/nerdctl-variant.md))
+- [docs/migration.tr.md](docs/migration.tr.md) — Docker Desktop ile bir arada yaşama: kurulu-ama-kapalı veya tam paralel ([EN](docs/migration.md))
 - [docs/faq.tr.md](docs/faq.tr.md) — sorun giderme (VMMEM, izinler, cache ıskalamalar…) ([EN](docs/faq.md))
 
 ## Gereksinimler

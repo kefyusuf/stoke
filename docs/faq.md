@@ -4,6 +4,10 @@ Türkçe: [faq.tr.md](faq.tr.md)
 
 ## Resources & Windows side
 
+**Can I keep Docker Desktop installed?**
+Yes — installed-but-idle (autostart off, WSL integration off) or in full parallel with
+the kit's engine. Checklist, port rules and rollback: [migration.md](migration.md).
+
 **Task Manager shows a huge `VMMEM` process.**
 That *is* your WSL2 VM. It's capped by `.wslconfig` (`memory=`). If it's at the cap,
 lower the cap; if the cap is high but VMMEM creeps up over days, ensure

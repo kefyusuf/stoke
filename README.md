@@ -70,6 +70,10 @@ Prerequisites: Windows 10 21H2+ or Windows 11, admin PowerShell, ~10 GB disk.
 
 For CI, wire the same `CACHE_REF` into your pipeline — ready-made templates are in [`ci/`](ci/).
 
+> **Keeping Docker Desktop?** You don't have to uninstall it. Installed-but-idle or
+> fully-parallel both work — checklist, port rules and rollback in
+> [docs/migration.md](docs/migration.md).
+
 ## Repo map
 
 | Path | Purpose |
@@ -94,6 +98,7 @@ For CI, wire the same `CACHE_REF` into your pipeline — ready-made templates ar
 - [docs/cache-guide.md](docs/cache-guide.md) — BuildKit cache backends, `mode=max`, cache mounts ([TR](docs/cache-guide.tr.md))
 - [docs/registry-mirror.md](docs/registry-mirror.md) — pull-through mirror setup and its limits ([TR](docs/registry-mirror.tr.md))
 - [docs/nerdctl-variant.md](docs/nerdctl-variant.md) — containerd + nerdctl alternative path ([TR](docs/nerdctl-variant.tr.md))
+- [docs/migration.md](docs/migration.md) — Docker Desktop ile bir arada yaşama: kurulu-ama-kapalı veya tam paralel ([TR](docs/migration.tr.md))
 - [docs/faq.md](docs/faq.md) — troubleshooting (VMMEM, permissions, cache misses…) ([TR](docs/faq.tr.md))
 
 ## Requirements
