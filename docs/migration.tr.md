@@ -28,6 +28,25 @@ size aittir (sonsuza kadar ertelemek de bir karardır). Üç dürüst seçenek:
    ```
    ya da distro terminalini açıp `docker`'ı alışıldığı gibi kullanın.
 
+### Zorunlu kılıınmış izolasyon — GUI düğmesinin ötesinde
+
+Yukarıdaki iki düğme Desktop tarafı ayarlarıdır: bir Desktop güncellemesi, yeniden
+kurulum veya makineyi paylaşan bir ekip arkadaşı bunları sessizce geri açabilir.
+`setup/protect-distro.sh` bunun yerine *distro tarafını* korur — engine kurulumundan
+sonra ve her Desktop güncellemesinden sonra `check` koşun:
+
+```bash
+./setup/protect-distro.sh check     # CLI ve socket'e kim sahip? enjeksiyonda exit≠0
+./setup/protect-distro.sh fix       # root: Desktop artefaktlarını temizle + context'i pinle
+```
+
+Üç enjeksiyon mekanizmasını da tespit eder (`/mnt/wsl/docker-desktop`'a giden
+`/usr/local/bin` symlink'leriyle CLI gölgelendirme, `/var/run/docker.sock`'un
+kaçırılması ve `docker-desktop-proxy` systemd unit'i), temizler ve kullanıcının
+varsayılan docker **context'ini** yerel socketa pinler — böylece yeniden enjekte
+edilmiş bir Desktop CLI bile kitin motoruyla konuşur. Fix geri döndürülebilirdir:
+Desktop'ta WSL Integration'ı yeniden açıp `systemctl unmask <unit>` yaparsınız.
+
 ## B seçeneği — tam paralel (iki motor aynı anda)
 
 Bu, doğrulanmış olarak çalışıyor (Windows CLI → Desktop motoru; distro CLI → kitin

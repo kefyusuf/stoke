@@ -28,6 +28,25 @@ goal, and it is yours to make (or postpone indefinitely). Three honest options:
    ```
    or just open the distro terminal and use `docker` there as usual.
 
+### Enforced isolation — beyond the GUI toggle
+
+The two toggles above are Desktop-side settings: a Desktop update, a reinstall, or a
+teammate sharing the machine can silently flip them back. `setup/protect-distro.sh`
+guards the *distro side* instead — run `check` after engine setup and after any
+Desktop update:
+
+```bash
+./setup/protect-distro.sh check     # who owns the CLI and the socket? exit≠0 on injection
+./setup/protect-distro.sh fix       # root: clean Desktop artifacts + pin the context
+```
+
+It detects all three injection mechanisms (CLI shadowing via `/usr/local/bin`
+symlinks into `/mnt/wsl/docker-desktop`, socket hijacking of `/var/run/docker.sock`,
+and the `docker-desktop-proxy` systemd unit), removes them, and pins the user's
+default docker **context** to the local socket — so even a re-injected Desktop CLI
+would still talk to the kit's engine. Fix is reversible: re-enable WSL Integration
+in Desktop and `systemctl unmask <unit>` if you ever *want* Desktop's engine here.
+
 ## Option B — full parallel (both engines at once)
 
 This is verified working (Windows CLI → Desktop engine; distro CLI → the kit's

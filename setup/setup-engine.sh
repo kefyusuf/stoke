@@ -87,5 +87,6 @@ Next steps:
   2. Sanity check:                docker version && docker buildx version
   3. Shared cache registry:       docker compose -f cache-stack/docker-compose.registry.yml up -d
   4. Prove the cache loop:        ./setup/verify.sh
+  5. Docker Desktop coexists?     Guard this distro:  ./setup/protect-distro.sh check
 
 NEXT
