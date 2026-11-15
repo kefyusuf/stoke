@@ -57,6 +57,19 @@ jobs:
           sys.exit(1 if bad else 0)
           EOF
 
+  secrets:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+      - name: gitleaks (full-history secret scan)
+        run: |
+          docker run --rm -v "$PWD:/repo" \
+            ghcr.io/gitleaks/gitleaks:v8.24.3 detect --source /repo --redact -v
+
   templates:
     runs-on: ubuntu-latest
     permissions:
