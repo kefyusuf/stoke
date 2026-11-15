@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Smoke test + cache benchmark for wsl2-docker-cache-kit.
+# Smoke test + cache benchmark for stoke.
 #
 # What it proves, on your machine:
 #   1. Toolchain: docker + buildx present and reachable (no sudo).

@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-# Node.js/TypeScript template for wsl2-docker-cache-kit — prod + dev targets.
+# Node.js/TypeScript template for stoke — prod + dev targets.
 #
 # Cache design (docs/cache-guide.md):
 #   * lockfile-first COPY  -> the deps layer is the cache key; source edits never

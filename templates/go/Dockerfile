@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-# Go template for wsl2-docker-cache-kit — prod + dev targets.
+# Go template for stoke — prod + dev targets.
 #
 # Cache design (docs/cache-guide.md):
 #   * deps stage runs `go mod download` INTO AN IMAGE LAYER — layer cache IS

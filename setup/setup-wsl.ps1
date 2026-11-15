@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Windows-side bootstrap for wsl2-docker-cache-kit: WSL2, a distro, and .wslconfig.
+    Windows-side bootstrap for stoke: WSL2, a distro, and .wslconfig.
 
 .DESCRIPTION
     - Installs WSL2 (without a distro) if missing, then installs $Distro.
@@ -128,5 +128,5 @@ if ($DryRun) {
 Write-Host ""
 Write-Host "Done. Next steps:" -ForegroundColor Green
 Write-Host "  1. Open the '$Distro' terminal (Start menu or: wsl -d $Distro)"
-Write-Host "  2. Clone this repo INSIDE the distro (e.g. ~/work/wsl2-docker-cache-kit), NOT under /mnt/c"
+Write-Host "  2. Clone this repo INSIDE the distro (e.g. ~/work/stoke), NOT under /mnt/c"
 Write-Host "  3. ./setup/setup-engine.sh"

@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to wsl2-docker-cache-kit. Format loosely follows
+All notable changes to stoke. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions are semver-ish
 (the kit is scripts + templates, so "breaking" = a template/setup contract change).
 
@@ -82,4 +82,4 @@ First public release.
 - Docker Desktop can stay installed (idle or parallel) — see
   [docs/migration.md](docs/migration.md)
 
-[0.1.0]: https://github.com/<owner>/wsl2-docker-cache-kit/releases/tag/v0.1.0
+[0.1.0]: https://github.com/<owner>/stoke/releases/tag/v0.1.0

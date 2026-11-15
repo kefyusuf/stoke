@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-# Generic multi-stage Dockerfile template for wsl2-docker-cache-kit.
+# Generic multi-stage Dockerfile template for stoke.
 #
 # This file BUILDS as-is (placeholder steps) so you can test the cache loop
 # immediately with templates/build.sh. Replace the marked sections with your

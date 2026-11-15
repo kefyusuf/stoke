@@ -1,4 +1,4 @@
-# wsl2-docker-cache-kit
+# stoke
 
 > Lightweight local container setup for Windows: **Docker Engine inside WSL2** (no Docker Desktop) plus a **shared BuildKit layer cache** that your local builds and CI builds both use.
 
@@ -6,7 +6,7 @@ Türkçe README: [README.tr.md](README.tr.md)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 <!-- CI badge — un-comment after creating the GitHub repo (replace <owner>):
-[![ci](https://github.com/<owner>/wsl2-docker-cache-kit/actions/workflows/ci.yml/badge.svg)](https://github.com/<owner>/wsl2-docker-cache-kit/actions/workflows/ci.yml)
+[![ci](https://github.com/<owner>/stoke/actions/workflows/ci.yml/badge.svg)](https://github.com/<owner>/stoke/actions/workflows/ci.yml)
 -->
 
 > ⚠️ **Review before running.** These scripts make system-level changes (Windows
@@ -89,7 +89,7 @@ Prerequisites: Windows 10 21H2+ or Windows 11, admin PowerShell, ~10 GB disk.
 2. **Inside WSL** (open a terminal in your distro):
    ```bash
    mkdir -p ~/work && cd ~/work                        # ext4, NOT /mnt/c
-   git clone <this-repo> && cd wsl2-docker-cache-kit
+   git clone <this-repo> && cd stoke
    ./setup/setup-engine.sh                             # docker-ce + buildx + compose plugin
    # shows its plan and asks [y/N] first (--dry-run previews, --yes skips the prompt);
    # log out and back in (or run `newgrp docker`) so the docker group applies

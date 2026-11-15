@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-# Rust template for wsl2-docker-cache-kit — prod + dev targets.
+# Rust template for stoke — prod + dev targets.
 #
 # Cache design (docs/cache-guide.md):
 #   * deps stage compiles the dependency graph INTO AN IMAGE LAYER (dummy crate

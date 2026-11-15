@@ -1,4 +1,4 @@
-# wsl2-docker-cache-kit
+# stoke
 
 > Windows için hafif konteyner kurulumu: Docker Desktop olmadan **WSL2 içinde Docker Engine** + yerel build'ler ile CI build'lerinin ortak kullandığı **paylaşımlı BuildKit katman cache'i**.
 
@@ -6,7 +6,7 @@ English README: [README.md](README.md)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 <!-- CI badge — GitHub reposunu oluşturunca yorumdan çıkar (<owner> yerine):
-[![ci](https://github.com/<owner>/wsl2-docker-cache-kit/actions/workflows/ci.yml/badge.svg)](https://github.com/<owner>/wsl2-docker-cache-kit/actions/workflows/ci.yml)
+[![ci](https://github.com/<owner>/stoke/actions/workflows/ci.yml/badge.svg)](https://github.com/<owner>/stoke/actions/workflows/ci.yml)
 -->
 
 > ⚠️ **Çalıştırmadan önce okuyun.** Bu scriptler sistem düzeyinde değişiklik yapar
@@ -89,7 +89,7 @@ Yerel build → cache'i paylaşımlı ref'e yazar. CI o ref'i sıcak cache olara
 2. **WSL içinde** (distro terminalini aç):
    ```bash
    mkdir -p ~/work && cd ~/work                        # ext4, /mnt/c DEĞİL
-   git clone <bu-repo> && cd wsl2-docker-cache-kit
+   git clone <bu-repo> && cd stoke
    ./setup/setup-engine.sh                             # docker-ce + buildx + compose plugin
    # önce planı gösterir, [y/N] sorar (--dry-run önizleme, --yes soru yok);
    # docker grubunun etkili olması için çık-gir yap (veya `newgrp docker`)
