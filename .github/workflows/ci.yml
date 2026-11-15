@@ -22,7 +22,10 @@ jobs:
       - name: shellcheck (all shipped scripts, style severity)
         run: |
           docker run --rm -v "$PWD:/wk" koalaman/shellcheck:stable \
-            --severity=style setup/*.sh templates/build.sh
+            --severity=style setup/*.sh setup/lib/*.sh templates/build.sh
+
+      - name: unit tests (bash harness)
+        run: bash tests/run-tests.sh
 
       - name: bash -n (syntax)
         run: for f in setup/*.sh templates/build.sh; do bash -n "$f"; done

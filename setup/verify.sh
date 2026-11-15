@@ -9,10 +9,17 @@
 #      mechanism local<->CI uses. If this passes, CI cache reuse works.
 #
 # Run inside WSL from the repo root:  ./setup/verify.sh
+# (On a Windows host with Docker Desktop:  KIT_ALLOW_LINUX=1 ./setup/verify.sh)
 set -euo pipefail
 
 REPO_ROOT=$(cd "$(dirname "$0")/.." && pwd)
 cd "$REPO_ROOT"
+
+KIT_LIB="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/common.sh"
+# shellcheck source=lib/common.sh
+source "$KIT_LIB"
+
+kit_require_wsl2
 
 info()  { printf '\033[1;34m==> %s\033[0m\n' "$*"; }
 ok()    { printf '\033[1;32m  PASS  %s\033[0m\n' "$*"; }

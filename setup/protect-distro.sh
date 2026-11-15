@@ -18,6 +18,12 @@
 # Exit codes: 0 = clean, 1 = Desktop artifacts detected / fix failed.
 set -euo pipefail
 
+KIT_LIB="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/common.sh"
+# shellcheck source=lib/common.sh
+source "$KIT_LIB"
+
+kit_require_wsl2
+
 info() { printf '\033[1;32m==> %s\033[0m\n' "$*"; }
 ok()   { printf '\033[1;32m  PASS  %s\033[0m\n' "$*"; }
 bad()  { printf '\033[1;31m  FAIL  %s\033[0m\n' "$*"; }

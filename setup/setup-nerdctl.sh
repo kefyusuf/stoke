@@ -4,8 +4,11 @@
 # Run as a normal user (asks sudo). Debian/Ubuntu only.
 set -euo pipefail
 
-info()  { printf '\033[1;32m==> %s\033[0m\n' "$*"; }
-warn()  { printf '\033[1;33m!!  %s\033[0m\n' "$*"; }
+KIT_LIB="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/common.sh"
+# shellcheck source=lib/common.sh
+source "$KIT_LIB"
+
+kit_require_wsl2
 
 [[ $EUID -eq 0 ]] && { warn "Run this as your normal user (it uses sudo internally), not as root."; exit 1; }
 command -v apt-get >/dev/null || { warn "Debian/Ubuntu (apt) required."; exit 1; }

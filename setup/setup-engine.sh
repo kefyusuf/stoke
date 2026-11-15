@@ -4,8 +4,11 @@
 # Reference: https://docs.docker.com/engine/install/ubuntu/
 set -euo pipefail
 
-info()  { printf '\033[1;32m==> %s\033[0m\n' "$*"; }
-warn()  { printf '\033[1;33m!!  %s\033[0m\n' "$*"; }
+KIT_LIB="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/common.sh"
+# shellcheck source=lib/common.sh
+source "$KIT_LIB"
+
+kit_require_wsl2
 
 if [[ $EUID -eq 0 ]]; then
   # Automation escape hatch: KIT_ALLOW_ROOT=1 SUDO_USER=<user> ./setup-engine.sh
