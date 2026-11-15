@@ -19,14 +19,15 @@ on:
   push:
     tags: ['v*']
 
-permissions:
-  contents: write       # create the release, upload assets
-  id-token: write       # OIDC identity for the attestations
-  attestations: write   # persist attestations to the repo's attestation store
+permissions: read-all
 
 jobs:
   release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write       # create the release, upload assets
+      id-token: write       # OIDC identity for the attestations
+      attestations: write   # persist attestations to the repo's attestation store
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
