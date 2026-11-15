@@ -13,12 +13,13 @@
 #   CACHE_REF=127.0.0.1:5000/myapp:buildcache DOCKERFILE=Dockerfile ../build.sh
 
 # Pinned (supply-chain hardening): bump tag+digest together via
-# `docker buildx imagetools inspect node:22-alpine`.
+# `docker buildx imagetools inspect node:26-alpine`.
 FROM node:26-alpine@sha256:6bd9ab43c0ec0190ca7b2d193906cb8b7edf6e7f4afa43ddeccd6452710bffb5 AS base
 ENV PNPM_HOME=/pnpm
 ENV PATH="/pnpm:$PATH"
-# Keep in sync with package.json "packageManager".
-RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
+# Node >= 25 images no longer ship corepack - install pnpm via npm instead.
+# Keep the version in sync with package.json "packageManager".
+RUN npm install -g pnpm@9.15.0
 WORKDIR /app
 
 # --- deps: lockfile-first = the shared cache key -------------------------------
