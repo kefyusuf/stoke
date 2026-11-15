@@ -8,6 +8,11 @@
 #   3. verify.sh passes: cold/warm cache speedup + registry cache round trip
 #   4. teardown.sh --dry-run previews, then teardown.sh --yes removes everything
 #      again (the kit's reversibility promise, exercised for real)
+#   5. windows-context.ps1 honors its -DryRun contract on real Windows
+#
+# The matrix runs the whole path on TWO distros (jammy + noble): distro-side
+# drift (systemd behavior, apt, store images) gets caught as early as the
+# runner-side drift does.
 #
 # Runner WSL images shift under us - that is exactly what this job catches
 # before users do. Scheduled nightly + dispatch-only on purpose; expect small
@@ -25,15 +30,19 @@ jobs:
   e2e:
     runs-on: windows-latest
     timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        distro: [Ubuntu-22.04, Ubuntu-24.04]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       # SHA-pinned to Vampire/setup-wsl v7 (action handles the otherwise
       # interactive first-launch user creation; Dependabot keeps the pin fresh).
-      - name: Install WSL2 + Ubuntu-22.04 (non-interactive)
+      - name: Install WSL2 + ${{ matrix.distro }} (non-interactive)
         uses: Vampire/setup-wsl@4c48163d9f981914dd8caa0fc335fe19cca5bff4 # v7
         with:
-          distribution: Ubuntu-22.04
+          distribution: ${{ matrix.distro }}
           use-cache: false
           wsl-conf: |
             [boot]
@@ -47,30 +56,37 @@ jobs:
         run: |
           $drive = $env:GITHUB_WORKSPACE.Substring(0,1).ToLower()
           $mnt = "/mnt/$drive" + ($env:GITHUB_WORKSPACE.Substring(2) -replace '\\','/')
-          wsl -d Ubuntu-22.04 -u root -- bash -c "mkdir -p /home/kitrunner/work && cp -a '$mnt/.' /home/kitrunner/work/kit/ && chown -R kitrunner:kitrunner /home/kitrunner/work"
+          $d = "${{ matrix.distro }}"
+          wsl -d $d -u root -- bash -c "mkdir -p /home/kitrunner/work && cp -a '$mnt/.' /home/kitrunner/work/kit/ && chown -R kitrunner:kitrunner /home/kitrunner/work"
           # passwordless sudo for the runner user: wsl.exe attaches a console, so
           # an interactive sudo prompt inside the kit scripts would hang forever
-          wsl -d Ubuntu-22.04 -u root -- bash -c "echo 'kitrunner ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/kitrunner && chmod 0440 /etc/sudoers.d/kitrunner"
+          wsl -d $d -u root -- bash -c "echo 'kitrunner ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/kitrunner && chmod 0440 /etc/sudoers.d/kitrunner"
           # the action creates kitrunner but does not make it the distro default
           # user - always pass -u kitrunner explicitly (kit scripts refuse root)
-          wsl -d Ubuntu-22.04 -u kitrunner -- bash -lc "cd ~/work/kit && ./tests/run-tests.sh"
+          wsl -d $d -u kitrunner -- bash -lc "cd ~/work/kit && ./tests/run-tests.sh"
+
+      - name: windows-context.ps1 -DryRun contract (Windows side)
+        shell: pwsh
+        timeout-minutes: 5
+        run: |
+          ./setup/windows-context.ps1 -Distro ${{ matrix.distro }} -DryRun
 
       - name: setup-engine.sh --yes in a fresh distro
         shell: pwsh
         timeout-minutes: 20
         run: |
-          wsl -d Ubuntu-22.04 -u kitrunner -- bash -lc "cd ~/work/kit && ./setup/setup-engine.sh --yes"
+          wsl -d ${{ matrix.distro }} -u kitrunner -- bash -lc "cd ~/work/kit && ./setup/setup-engine.sh --yes"
 
       - name: verify.sh (cache round trip on real WSL2)
         shell: pwsh
         timeout-minutes: 20
         run: |
-          wsl -d Ubuntu-22.04 -u kitrunner -- bash -lc "cd ~/work/kit && ./setup/verify.sh"
+          wsl -d ${{ matrix.distro }} -u kitrunner -- bash -lc "cd ~/work/kit && ./setup/verify.sh"
 
       - name: teardown --dry-run, then real teardown, then sanity
         shell: pwsh
         timeout-minutes: 15
         run: |
-          wsl -d Ubuntu-22.04 -u kitrunner -- bash -lc "cd ~/work/kit && ./setup/teardown.sh --dry-run"
-          wsl -d Ubuntu-22.04 -u kitrunner -- bash -lc "cd ~/work/kit && ./setup/teardown.sh --yes"
-          wsl -d Ubuntu-22.04 -u kitrunner -- bash -lc "! command -v docker && echo 'teardown sanity OK: docker is gone'"
+          wsl -d ${{ matrix.distro }} -u kitrunner -- bash -lc "cd ~/work/kit && ./setup/teardown.sh --dry-run"
+          wsl -d ${{ matrix.distro }} -u kitrunner -- bash -lc "cd ~/work/kit && ./setup/teardown.sh --yes"
+          wsl -d ${{ matrix.distro }} -u kitrunner -- bash -lc "! command -v docker && echo 'teardown sanity OK: docker is gone'"
