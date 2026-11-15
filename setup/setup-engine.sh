@@ -141,7 +141,16 @@ Next steps:
   2. Sanity check:                docker version && docker buildx version
   3. Shared cache registry:       docker compose -f cache-stack/docker-compose.registry.yml up -d
   4. Prove the cache loop:        ./setup/verify.sh
-  5. Docker Desktop coexists?     Guard this distro:  ./setup/protect-distro.sh check
-  6. Remove everything again:     ./setup/teardown.sh --dry-run first, then without it
+  5. Daily health report:         ./setup/doctor.sh
+  6. Docker Desktop coexists?     Guard this distro:  ./setup/protect-distro.sh check
+  7. Remove everything again:     ./setup/teardown.sh --dry-run first, then without it
 
 NEXT
+
+# Desktop coexistence auto-check (read-only, best-effort): catches the common
+# case of Desktop's WSL integration being ON while we installed - the user
+# learns immediately instead of on the first weird docker call.
+if [[ -x setup/protect-distro.sh ]]; then
+  info "Docker Desktop coexistence check:"
+  ./setup/protect-distro.sh check || true
+fi
