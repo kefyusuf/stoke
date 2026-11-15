@@ -4,6 +4,10 @@ Thanks for considering a contribution! The kit is small on purpose — read
 [docs/evidence.md](docs/evidence.md) for the "why" behind every pattern before
 changing one.
 
+**Response expectations:** the maintainer triages issues and PRs within a
+week, usually faster. Nightly E2E failures get attention the next morning —
+see the triage table below.
+
 ## Local development
 
 ```bash

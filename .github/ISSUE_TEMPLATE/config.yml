@@ -1,8 +1,8 @@
 blank_issues_enabled: false
 contact_links:
   - name: Question / usage help
-    url: https://github.com/<owner>/stoke/blob/main/docs/faq.md
-    about: Check the FAQ first — most VMMEM, permission and cache-miss cases are covered.
+    url: https://github.com/kefyusuf/stoke/discussions
+    about: Ask in Discussions (Q&A category) — also check the FAQ first, most VMMEM, permission and cache-miss cases are covered.
   - name: Security vulnerability
-    url: https://github.com/<owner>/stoke/security/advisories/new
-    about: Report privately via GitHub — never in a public issue.
+    url: https://github.com/kefyusuf/stoke/security/advisories/new
+    about: Report privately via GitHub (private vulnerability reporting is enabled) — never in a public issue.
