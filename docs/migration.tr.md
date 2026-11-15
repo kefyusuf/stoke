@@ -69,6 +69,14 @@ motoru; bağımsız daemon'lar, ayrı imaj store'ları). Tek sert kural ve bir a
 - **Geri dönüş**: istediğiniz zaman yeniden kurun. Bu kitin hiçbir parçası Desktop'ın
   yokluğuna bağımlı değildir.
 
+## Kit'in kendisini kaldırmak
+
+`./setup/teardown.sh` kitin yaptığı her mutasyonu güvenli sırayla geri alır
+(konteynerler -> docker context -> servisler -> grup -> paketler -> apt repo
+dosyaları). Önce `--dry-run` ile önizleyin; docker veri kökü ve `.wslconfig`'e
+yalnızca açıkça `--purge-data` / `--restore-wslconfig` verirseniz dokunulur.
+Tam dokunma tablosu: [SECURITY.md](../SECURITY.md).
+
 ## Ne paylaşılmıyor, ne paylaşıyor
 
 | | Docker Desktop motoru | Kit motoru (distro içinde) |

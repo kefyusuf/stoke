@@ -12,6 +12,9 @@ English README: [README.md](README.md)
 > ⚠️ **Çalıştırmadan önce okuyun.** Bu scriptler sistem düzeyinde değişiklik yapar
 > (Windows özellikleri, WSL içi apt/systemd, root sahipli dosyalar). Amaçlanan akış
 > oku-sonra-koştur — her scriptin neye dokunduğu: [SECURITY.md](SECURITY.md).
+> Güvenlik ağı hazır: her scriptte `--dry-run` var (önizleme, hiçbir şey değiştirmez),
+> ilk değişiklikten önce planı gösterip `[y/N]` sorar ve işi bitince
+> `setup/teardown.sh` her şeyi geri alır.
 
 ## Neden
 
@@ -88,6 +91,7 @@ Yerel build → cache'i paylaşımlı ref'e yazar. CI o ref'i sıcak cache olara
    mkdir -p ~/work && cd ~/work                        # ext4, /mnt/c DEĞİL
    git clone <bu-repo> && cd wsl2-docker-cache-kit
    ./setup/setup-engine.sh                             # docker-ce + buildx + compose plugin
+   # önce planı gösterir, [y/N] sorar (--dry-run önizleme, --yes soru yok);
    # docker grubunun etkili olması için çık-gir yap (veya `newgrp docker`)
    ```
 3. **Opsiyonel paylaşımlı cache registry'si** (yerel, TLS gerektirmez — 127.0.0.0/8 varsayılan olarak insecure):
@@ -102,6 +106,13 @@ Yerel build → cache'i paylaşımlı ref'e yazar. CI o ref'i sıcak cache olara
    ```bash
    ./setup/verify.sh      # araç zincirini kontrol eder, soğuk/cached build süresini ölçer, registry cache döngüsünü test eder
    ```
+6. **Sonra çıkmak ister misin?** Kit kendini geri alır:
+   ```bash
+   ./setup/teardown.sh --dry-run   # geri alma planını önizle, hiçbir şey değişmez
+   ./setup/teardown.sh             # konteynerler -> context -> servisler -> grup -> paketler -> repo dosyaları
+   ```
+   `/var/lib/docker` ve `.wslconfig`'e yalnızca açıkça `--purge-data` /
+   `--restore-wslconfig` verirsen dokunur.
 
 CI tarafı için aynı `CACHE_REF` değerini pipeline'a bağla — hazır şablonlar [`ci/`](ci/) klasöründe.
 
@@ -118,12 +129,14 @@ CI tarafı için aynı `CACHE_REF` değerini pipeline'a bağla — hazır şablo
 | `setup/setup-engine.sh` | WSL içi Docker Engine + buildx + compose kurulumu |
 | `setup/setup-nerdctl.sh` | Opsiyonel daha hafif varyant: containerd + nerdctl |
 | `setup/verify.sh` | Smoke test + cache benchmark (ilk ve ikinci build) |
+| `setup/teardown.sh` | Kit'in her mutasyonunu güvenli sırayla geri alır (veri/config silme kesinlikle opt-in) |
 | `cache-stack/` | Yerel cache registry + pull-through mirror (compose) |
 | `templates/` | Genel multi-stage Dockerfile + cache uyumlu build sarmalayıcıları |
 | `templates/node-ts/` | Çalışan Node/TS örneği: prod + dev target'lar, pnpm store cache mount'ları, compose dev sunucusu |
 | `templates/rust/` | Çalışan Rust örneği: dummy-crate deps stage, cargo cache mount'ları, musl statik binary |
 | `templates/go/` | Çalışan Go örneği: GOMODCACHE/GOCACHE mount'ları, `scratch` prod imajı |
 | `ci/` | GitHub Actions (registry ve gha cache) ve GitLab CI şablonları |
+| `tests/` | Scriptlerin guard/dry-run/consent/teardown sözleşmeleri için sıfır-bağımlılık birim testleri (CI'da çalışır) |
 | `docs/` | Kanıtlar, derinlemesine rehberler, SSS |
 
 ## Dokümantasyon

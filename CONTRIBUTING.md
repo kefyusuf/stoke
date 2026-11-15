@@ -11,16 +11,18 @@ changing one.
 ./setup/setup-engine.sh          # once
 ./setup/verify.sh                # proves the cache loop on your machine
 ./setup/protect-distro.sh check  # if Docker Desktop coexists
+bash tests/run-tests.sh          # unit suites for the script contracts
 ```
 
-CI runs on every push: shellcheck (style severity), `bash -n`, YAML parse,
-markdown link check, and a real build + HTTP smoke of every template — mirror
-that locally before opening a PR:
+CI runs on every push: shellcheck (style severity), `bash -n`, the unit test
+suites, YAML parse, markdown link check, a gitleaks secret scan, and a real
+build + HTTP smoke of every template — mirror that locally before opening a PR:
 
 ```bash
 docker run --rm -v "$PWD:/wk" koalaman/shellcheck:stable \
-  --severity=style setup/*.sh templates/build.sh
-for f in setup/*.sh templates/build.sh; do bash -n "$f"; done
+  --severity=style setup/*.sh setup/lib/*.sh templates/build.sh
+for f in setup/*.sh setup/lib/*.sh templates/build.sh; do bash -n "$f"; done
+bash tests/run-tests.sh
 ```
 
 ## Adding a stack template
@@ -62,6 +64,10 @@ dialects. A new template must:
 
 - Bash: `set -euo pipefail`, everything quoted, shellcheck-clean at
   `--severity=style`, `trap` cleanup for anything created.
+- Mutations go through `kit_run`, consent through `kit_consent`
+  (`setup/lib/common.sh`) — a script that changes system state must support
+  `--dry-run` and ask before its first change. The unit suites in `tests/`
+  pin these contracts; extend them when you change a script's behavior.
 - Versions/checksums pinned with an override escape hatch (see
   `setup/setup-nerdctl.sh`).
 - Claims get sources: performance/licensing statements belong in

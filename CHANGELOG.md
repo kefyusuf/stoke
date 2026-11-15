@@ -4,6 +4,35 @@ All notable changes to wsl2-docker-cache-kit. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions are semver-ish
 (the kit is scripts + templates, so "breaking" = a template/setup contract change).
 
+## [Unreleased]
+
+### Added
+
+- Kit-wide mutation policy (`setup/lib/common.sh`): every script supports
+  `--dry-run`/`KIT_DRY_RUN=1` (preview, executes nothing) and
+  `--yes`/`KIT_YES=1` (unattended); interactive runs print their plan and ask
+  `[y/N]` before the first change
+- WSL2 platform guard: all WSL-side scripts refuse WSL1 (with the conversion
+  command) and non-WSL hosts; explicit `KIT_ALLOW_LINUX=1` override
+- `setup/teardown.sh`: scripted, order-safe reversal of every kit mutation;
+  `/var/lib/docker` and `.wslconfig` are only touched with explicit
+  `--purge-data` / `--restore-wslconfig`; `wsl --unregister` deliberately not
+  automated
+- `tests/`: zero-dependency bash test harness; 71 unit tests covering the
+  guard / dry-run / consent / teardown contracts, wired into CI
+- CI: unit-test step, gitleaks full-history secret scan, `windows-e2e.yml`
+  (nightly + on-demand real-WSL2 run on a Windows runner: setup -> verify ->
+  teardown)
+
+### Fixed
+
+- `USER` unbound crash under `set -u` in minimal shells (SUDO_USER -> USER ->
+  `id -un` fallback chain in all scripts)
+- Dry-run notices were swallowed by call-site redirects (`> /dev/null`,
+  `2>/dev/null || true`) — notices now go to fd 3
+- SIGPIPE (rc 141) when piping into `kit_run ... tee` in dry-run mode; file
+  writes use the herestring pattern (documented in the lib)
+
 ## [0.1.0] - 2026-11-05
 
 First public release.

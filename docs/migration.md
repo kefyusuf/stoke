@@ -68,6 +68,14 @@ engine, independent daemons, separate image stores). One hard rule and one habit
 - **Rollback**: reinstall any time. Nothing in this kit depends on Desktop being
   absent.
 
+## Removing the kit itself
+
+`./setup/teardown.sh` reverses every kit mutation in safe order (containers ->
+docker context -> services -> group -> packages -> apt repo files). Preview it
+with `--dry-run`; the docker data root and `.wslconfig` are only touched with
+explicit `--purge-data` / `--restore-wslconfig`. The full touch table lives in
+[SECURITY.md](../SECURITY.md).
+
 ## What is shared vs. separate
 
 | | Docker Desktop engine | Kit engine (in distro) |

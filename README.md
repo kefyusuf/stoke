@@ -12,6 +12,9 @@ Türkçe README: [README.tr.md](README.tr.md)
 > ⚠️ **Review before running.** These scripts make system-level changes (Windows
 > features, apt/systemd inside WSL, root-owned files). The intended workflow is
 > read-then-run — [SECURITY.md](SECURITY.md) lists exactly what each script touches.
+> Safety net built in: every script has `--dry-run` (preview, changes nothing),
+> shows its plan and asks `[y/N]` before the first change, and
+> `setup/teardown.sh` reverses the whole kit when you want out.
 
 ## Why
 
@@ -88,6 +91,7 @@ Prerequisites: Windows 10 21H2+ or Windows 11, admin PowerShell, ~10 GB disk.
    mkdir -p ~/work && cd ~/work                        # ext4, NOT /mnt/c
    git clone <this-repo> && cd wsl2-docker-cache-kit
    ./setup/setup-engine.sh                             # docker-ce + buildx + compose plugin
+   # shows its plan and asks [y/N] first (--dry-run previews, --yes skips the prompt);
    # log out and back in (or run `newgrp docker`) so the docker group applies
    ```
 3. **Optional shared cache registry** (local, HTTP-free setup — 127.0.0.0/8 is insecure-by-default):
@@ -102,6 +106,13 @@ Prerequisites: Windows 10 21H2+ or Windows 11, admin PowerShell, ~10 GB disk.
    ```bash
    ./setup/verify.sh      # checks the toolchain, times cold vs cached build, tests the registry cache round-trip
    ```
+6. **Want out later?** The kit undoes itself:
+   ```bash
+   ./setup/teardown.sh --dry-run   # preview the reversal, change nothing
+   ./setup/teardown.sh             # containers -> context -> services -> group -> packages -> repo files
+   ```
+   `/var/lib/docker` and `.wslconfig` are only touched with explicit
+   `--purge-data` / `--restore-wslconfig`.
 
 For CI, wire the same `CACHE_REF` into your pipeline — ready-made templates are in [`ci/`](ci/).
 
@@ -118,12 +129,14 @@ For CI, wire the same `CACHE_REF` into your pipeline — ready-made templates ar
 | `setup/setup-engine.sh` | WSL-side Docker Engine + buildx + compose install |
 | `setup/setup-nerdctl.sh` | Optional lighter variant: containerd + nerdctl |
 | `setup/verify.sh` | Smoke test + cache benchmark (first vs second build) |
+| `setup/teardown.sh` | Reverses every kit mutation in safe order (data/config deletes strictly opt-in) |
 | `cache-stack/` | Local cache registry + pull-through mirror (compose) |
 | `templates/` | Generic multi-stage Dockerfile + cache-aware build wrappers |
 | `templates/node-ts/` | Runnable Node/TS sample: prod + dev targets, pnpm store cache mounts, compose dev server |
 | `templates/rust/` | Runnable Rust sample: dummy-crate deps stage, cargo cache mounts, musl static binary |
 | `templates/go/` | Runnable Go sample: GOMODCACHE/GOCACHE mounts, `scratch` prod image |
 | `ci/` | GitHub Actions (registry & gha cache) and GitLab CI templates |
+| `tests/` | Zero-dependency unit suite for the scripts' guard/dry-run/consent/teardown contracts (runs in CI) |
 | `docs/` | Evidence, deep-dive guides, FAQ |
 
 ## Documentation
