@@ -103,6 +103,9 @@ for pkg in docker.io docker-doc docker-compose podman-docker containerd runc; do
   kit_run sudo apt-get remove -y "$pkg" 2>/dev/null || true
 done
 
+info "Refreshing apt lists (docker repo just added)"
+kit_run sudo apt-get update
+
 info "Installing Docker Engine + buildx + compose plugin"
 kit_run sudo apt-get install -y docker-ce docker-ce-cli containerd.io \
   docker-buildx-plugin docker-compose-plugin
