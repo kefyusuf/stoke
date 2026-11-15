@@ -8,6 +8,21 @@ All notable changes to wsl2-docker-cache-kit. Format loosely follows
 
 ### Added
 
+- `setup/doctor.sh`: one-pass read-only health report (daemon, buildx,
+  context, systemd, Desktop CLI shadowing, cache stack containers, mirror
+  registration, disk usage). FAIL-grade problems exit 1; optional pieces
+  warn. `setup-engine.sh` chains a best-effort protect-distro check.
+- `setup/init-project.sh <stack> <name>`: project scaffolder - stack
+  template + cache wrappers + project-scoped `.env`
+  (`CACHE_REF=127.0.0.1:5000/<name>:buildcache`). Kit mutation policy
+  applies (--dry-run / consent / --yes).
+- Project-aware build wrappers: `build.sh`/`build.ps1` default
+  `CACHE_REF` to `127.0.0.1:5000/<dir>:buildcache` (projects no longer
+  share one "myapp" ref), read a allowlisted-literal `.env` layer
+  (never eval'd), and pass extra buildx args through (`--` / `-ExtraArgs`).
+- `setup/windows-context.ps1`: bridge the in-distro engine to Windows
+  tools (loopback-only TCP listener + `kit-wsl` docker context, `-Undo`
+  included); unblocks PowerShell CLI, VS Code Docker panel, Visual Studio.
 - Kit-wide mutation policy (`setup/lib/common.sh`): every script supports
   `--dry-run`/`KIT_DRY_RUN=1` (preview, executes nothing) and
   `--yes`/`KIT_YES=1` (unattended); interactive runs print their plan and ask

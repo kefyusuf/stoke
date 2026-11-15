@@ -98,10 +98,12 @@ Yerel build → cache'i paylaşımlı ref'e yazar. CI o ref'i sıcak cache olara
    ```bash
    docker compose -f cache-stack/docker-compose.registry.yml up -d
    ```
-4. **Cache ile build**: `templates/Dockerfile` ve `templates/build.sh` dosyalarını projene kopyala:
+4. **Cache ile build**: tek komutla proje iskeleti (stack şablonu + build sarmalayıcıları + proje-özel `.env`):
    ```bash
-   CACHE_REF=127.0.0.1:5000/myapp:buildcache ./build.sh
+   ./setup/init-project.sh rust myapp    # stack'ler: rust | go | node-ts
+   cd myapp && ./build.sh                # CACHE_REF zaten .env'de
    ```
+   ya da `templates/Dockerfile` + `templates/build.sh`'i elle kopyala.
 5. **Çalıştığını kanıtla**:
    ```bash
    ./setup/verify.sh      # araç zincirini kontrol eder, soğuk/cached build süresini ölçer, registry cache döngüsünü test eder
@@ -116,6 +118,17 @@ Yerel build → cache'i paylaşımlı ref'e yazar. CI o ref'i sıcak cache olara
 
 CI tarafı için aynı `CACHE_REF` değerini pipeline'a bağla — hazır şablonlar [`ci/`](ci/) klasöründe.
 
+## Günlük kullanım
+
+| Komut | Ne yapar |
+|---|---|
+| `./setup/doctor.sh` | Tek geçişlik salt-okunur sağlık raporu: daemon, buildx, context, systemd, Desktop CLI gölgesi, cache stack, mirror kaydı, disk |
+| `./setup/init-project.sh <stack> <ad>` | Proje iskeleti: stack şablonu + sarmalayıcılar + proje-özel `.env` (`rust \| go \| node-ts`) |
+| `./setup/windows-context.ps1` | Motoru Windows araçlarına köprüle (PowerShell CLI, VS Code Docker paneli); `-Undo` geri alır |
+| `./setup/verify.sh` | Benchmark: soğuk/cached build + registry cache döngüsü |
+| `./setup/protect-distro.sh check` | Desktop paralel çalışırken CLI/soket sahibi kim? |
+| `./setup/teardown.sh --dry-run` | Tam kaldırmanın önizlemesi; uygulamak için flag'siz çalıştır |
+
 > **Docker Desktop kalsın mı?** Kaldırmak zorunda değilsin. Kurulu-ama-kapalı veya tam
 > paralel ikisi de çalışır — kontrol listesi, port kuralları ve geri dönüş:
 > [docs/migration.tr.md](docs/migration.tr.md).
@@ -129,6 +142,9 @@ CI tarafı için aynı `CACHE_REF` değerini pipeline'a bağla — hazır şablo
 | `setup/setup-engine.sh` | WSL içi Docker Engine + buildx + compose kurulumu |
 | `setup/setup-nerdctl.sh` | Opsiyonel daha hafif varyant: containerd + nerdctl |
 | `setup/verify.sh` | Smoke test + cache benchmark (ilk ve ikinci build) |
+| `setup/doctor.sh` | Günlük salt-okunur sağlık raporu (FAIL/WARN/INFO satırları) |
+| `setup/init-project.sh` | Proje iskeletleyici: stack şablonu + sarmalayıcılar + proje-özel `.env` |
+| `setup/windows-context.ps1` | Kit motoruna Windows tarafından erişim (loopback TCP + context, `-Undo` dahil) |
 | `setup/teardown.sh` | Kit'in her mutasyonunu güvenli sırayla geri alır (veri/config silme kesinlikle opt-in) |
 | `cache-stack/` | Yerel cache registry + pull-through mirror (compose) |
 | `templates/` | Genel multi-stage Dockerfile + cache uyumlu build sarmalayıcıları |

@@ -98,10 +98,13 @@ Prerequisites: Windows 10 21H2+ or Windows 11, admin PowerShell, ~10 GB disk.
    ```bash
    docker compose -f cache-stack/docker-compose.registry.yml up -d
    ```
-4. **Build with cache**: copy `templates/Dockerfile` and `templates/build.sh` into your project, then:
+4. **Build with cache**: scaffold a project in one command (copies the stack template,
+   build wrappers and a project-scoped `.env`):
    ```bash
-   CACHE_REF=127.0.0.1:5000/myapp:buildcache ./build.sh
+   ./setup/init-project.sh rust myapp    # stacks: rust | go | node-ts
+   cd myapp && ./build.sh                # CACHE_REF already in .env
    ```
+   or copy `templates/Dockerfile` + `templates/build.sh` manually.
 5. **Prove it works**:
    ```bash
    ./setup/verify.sh      # checks the toolchain, times cold vs cached build, tests the registry cache round-trip
@@ -116,6 +119,17 @@ Prerequisites: Windows 10 21H2+ or Windows 11, admin PowerShell, ~10 GB disk.
 
 For CI, wire the same `CACHE_REF` into your pipeline — ready-made templates are in [`ci/`](ci/).
 
+## Daily driver
+
+| Command | What it does |
+|---|---|
+| `./setup/doctor.sh` | One-pass read-only health report: daemon, buildx, context, systemd, Desktop CLI shadowing, cache stack, mirror registration, disk |
+| `./setup/init-project.sh <stack> <name>` | Scaffold a project: stack template + cache wrappers + project-scoped `.env` (`rust \| go \| node-ts`) |
+| `./setup/windows-context.ps1` | Bridge the engine to Windows tools (PowerShell CLI, VS Code Docker panel); `-Undo` reverses |
+| `./setup/verify.sh` | Benchmark: cold vs cached build + registry cache round trip |
+| `./setup/protect-distro.sh check` | Who owns the CLI/socket when Docker Desktop coexists |
+| `./setup/teardown.sh --dry-run` | Preview the full uninstall; run without the flag to apply |
+
 > **Keeping Docker Desktop?** You don't have to uninstall it. Installed-but-idle or
 > fully-parallel both work — checklist, port rules and rollback in
 > [docs/migration.md](docs/migration.md).
@@ -129,6 +143,9 @@ For CI, wire the same `CACHE_REF` into your pipeline — ready-made templates ar
 | `setup/setup-engine.sh` | WSL-side Docker Engine + buildx + compose install |
 | `setup/setup-nerdctl.sh` | Optional lighter variant: containerd + nerdctl |
 | `setup/verify.sh` | Smoke test + cache benchmark (first vs second build) |
+| `setup/doctor.sh` | Daily read-only health report (FAIL/WARN/INFO lines) |
+| `setup/init-project.sh` | Project scaffolder: stack template + wrappers + project-scoped `.env` |
+| `setup/windows-context.ps1` | Windows-side docker access to the kit engine (loopback TCP + context, `-Undo` included) |
 | `setup/teardown.sh` | Reverses every kit mutation in safe order (data/config deletes strictly opt-in) |
 | `cache-stack/` | Local cache registry + pull-through mirror (compose) |
 | `templates/` | Generic multi-stage Dockerfile + cache-aware build wrappers |
