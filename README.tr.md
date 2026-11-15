@@ -163,6 +163,7 @@ CI tarafı için aynı `CACHE_REF` değerini pipeline'a bağla — hazır şablo
 - [docs/nerdctl-variant.tr.md](docs/nerdctl-variant.tr.md) — containerd + nerdctl alternatif yolu ([EN](docs/nerdctl-variant.md))
 - [docs/migration.tr.md](docs/migration.tr.md) — Docker Desktop ile bir arada yaşama: kurulu-ama-kapalı veya tam paralel ([EN](docs/migration.md))
 - [docs/faq.tr.md](docs/faq.tr.md) — sorun giderme (VMMEM, izinler, cache ıskalamalar…) ([EN](docs/faq.md))
+- [docs/releasing.tr.md](docs/releasing.tr.md) — sürüm çıkarma ritüeli ve artifact attestation'lar ([EN](docs/releasing.md))
 
 ## Gereksinimler
 

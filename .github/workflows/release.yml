@@ -1,0 +1,71 @@
+# Release pipeline - the modern keyless-norm path.
+#
+# On a `v*` tag push:
+#   1. builds the source tarball (git archive - deterministic content)
+#   2. writes a sha256 checksums file
+#   3. creates the GitHub Release with tarball + checksums as assets
+#   4. generates build-provenance ATTESTATIONS (in-toto, signed by GitHub's
+#      Sigstore-backed OIDC identity - no personal key to manage) for the
+#      tarball and the checksums, and uploads the .intoto.jsonl bundle as a
+#      release asset too (that is what Scorecard's Signed-Releases check
+#      looks for).
+#
+# Verify a release on your machine:
+#   gh release download v1.1.0 -p "*.tar.gz" -p "*.sha256" -p "*.intoto.jsonl"
+#   gh attestation verify stoke-1.1.0.tar.gz -R kefyusuf/stoke
+name: release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write   # create the release, upload assets
+  id-token: write   # OIDC identity for the attestations
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Build source tarball + checksums
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME#v}"
+          git archive --format=tar.gz --prefix="stoke-${VERSION}/" \
+            -o "stoke-${VERSION}.tar.gz" "${GITHUB_REF_NAME}"
+          sha256sum "stoke-${VERSION}.tar.gz" > "stoke-${VERSION}.tar.gz.sha256"
+
+      - name: Create the release with assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME#v}"
+          gh release create "${GITHUB_REF_NAME}" \
+            --title "stoke ${GITHUB_REF_NAME}" \
+            --verify-tag \
+            --generate-notes \
+            "stoke-${VERSION}.tar.gz" \
+            "stoke-${VERSION}.tar.gz.sha256"
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        id: attest
+        with:
+          subject-path: |
+            stoke-*.tar.gz
+            stoke-*.tar.gz.sha256
+
+      - name: Attach the attestation bundle to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUNDLE: ${{ steps.attest.outputs.bundle_path }}
+        run: |
+          set -euo pipefail
+          cp "$BUNDLE" attestation.intoto.jsonl
+          gh release upload "${GITHUB_REF_NAME}" attestation.intoto.jsonl --clobber

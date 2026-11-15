@@ -164,6 +164,7 @@ For CI, wire the same `CACHE_REF` into your pipeline — ready-made templates ar
 - [docs/nerdctl-variant.md](docs/nerdctl-variant.md) — containerd + nerdctl alternative path ([TR](docs/nerdctl-variant.tr.md))
 - [docs/migration.md](docs/migration.md) — Docker Desktop ile bir arada yaşama: kurulu-ama-kapalı veya tam paralel ([TR](docs/migration.tr.md))
 - [docs/faq.md](docs/faq.md) — troubleshooting (VMMEM, permissions, cache misses…) ([TR](docs/faq.tr.md))
+- [docs/releasing.md](docs/releasing.md) — the release ritual and artifact attestations ([TR](docs/releasing.tr.md))
 
 ## Requirements
 
