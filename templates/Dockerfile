@@ -10,7 +10,7 @@
 # See docs/cache-guide.md.
 
 # --- Stage 1: dependencies ----------------------------------------------------
-FROM alpine:3.20 AS deps
+FROM alpine:3.24 AS deps
 WORKDIR /src
 
 # TODO(your-stack): COPY ONLY your lockfile/manifests here, e.g.:
@@ -41,7 +41,7 @@ RUN --mount=type=cache,target=/tmp/kit-cache \
     echo "placeholder: compile" > build.done
 
 # --- Stage 3: final image (minimal runtime) ------------------------------------
-FROM alpine:3.20 AS final
+FROM alpine:3.24 AS final
 WORKDIR /app
 # TODO(your-stack): copy only what runtime needs:
 #   COPY --from=build /src/dist ./dist
