@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question / usage help
+    url: https://github.com/<owner>/wsl2-docker-cache-kit/blob/main/docs/faq.md
+    about: Check the FAQ first — most VMMEM, permission and cache-miss cases are covered.
+  - name: Security vulnerability
+    url: https://github.com/<owner>/wsl2-docker-cache-kit/security/advisories/new
+    about: Report privately via GitHub — never in a public issue.
