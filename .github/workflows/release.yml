@@ -20,8 +20,9 @@ on:
     tags: ['v*']
 
 permissions:
-  contents: write   # create the release, upload assets
-  id-token: write   # OIDC identity for the attestations
+  contents: write       # create the release, upload assets
+  id-token: write       # OIDC identity for the attestations
+  attestations: write   # persist attestations to the repo's attestation store
 
 jobs:
   release:
