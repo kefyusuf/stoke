@@ -19,8 +19,13 @@ suites, YAML parse, markdown link check, a gitleaks secret scan, and a real
 build + HTTP smoke of every template — mirror that locally before opening a PR:
 
 ```bash
-docker run --rm -v "$PWD:/wk" koalaman/shellcheck:stable \
-  --severity=style setup/*.sh setup/lib/*.sh templates/build.sh
+# (Git Bash on Windows: prefix the docker line with MSYS_NO_PATHCONV=1
+#  and use -v "$(pwd -W):/wk")
+docker run --rm -v "$PWD:/wk" -w /wk koalaman/shellcheck:stable \
+  --severity=style --external-sources --source-path=SCRIPTDIR \
+  setup/setup-engine.sh setup/setup-nerdctl.sh setup/protect-distro.sh \
+  setup/verify.sh setup/teardown.sh setup/doctor.sh setup/init-project.sh \
+  setup/lib/common.sh templates/build.sh
 for f in setup/*.sh setup/lib/*.sh templates/build.sh; do bash -n "$f"; done
 bash tests/run-tests.sh
 ```

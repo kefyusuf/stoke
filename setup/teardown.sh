@@ -110,6 +110,9 @@ kit_run sudo rm -f /etc/apt/sources.list.d/docker.list /etc/apt/keyrings/docker.
 
 # 7. optional: .wslconfig restore
 if [[ "$RESTORE_WSLCONFIG" == "1" ]]; then
+  # ls over find on purpose: backup names are kit-generated (timestamp suffix)
+  # and the glob keeps this readable. shellcheck: SC2012 accepted.
+  # shellcheck disable=SC2012
   newest="$(ls -1 "$WSLCONFIG".bak.* 2>/dev/null | sort | tail -1 || true)"
   if [[ -n "$newest" ]]; then
     kit_run cp "$newest" "$WSLCONFIG"
