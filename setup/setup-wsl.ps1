@@ -7,10 +7,13 @@
     - Writes %UserProfile%\.wslconfig from the given limits (backs up an existing file).
     - Shuts WSL down so the new limits apply at next start.
     Run from an *administrator* PowerShell. Reboot if WSL installation asks for one.
+    Kit-wide mutation policy: -DryRun previews every change without applying;
+    -Yes skips the consent prompt for unattended runs.
 
 .EXAMPLE
     ./setup/setup-wsl.ps1
-    ./setup/setup-wsl.ps1 -Distro Ubuntu-22.04 -MemoryGB 8 -Processors 6
+    ./setup/setup-wsl.ps1 -DryRun
+    ./setup/setup-wsl.ps1 -Yes -Distro Ubuntu-22.04 -MemoryGB 8 -Processors 6
 #>
 
 [CmdletBinding()]
@@ -20,7 +23,9 @@ param(
     [int]$Processors = 4,
     [int]$SwapGB = 2,
     [string]$WslConfigPath = "$env:USERPROFILE\.wslconfig",
-    [switch]$SkipWslConfig
+    [switch]$SkipWslConfig,
+    [switch]$DryRun,
+    [switch]$Yes
 )
 
 $ErrorActionPreference = "Stop"
@@ -31,13 +36,28 @@ if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administra
     throw "Please run from an administrator PowerShell (WSL feature installation needs elevation)."
 }
 
+# --- consent (kit-wide mutation policy) ----------------------------------------
+if ($DryRun) {
+    Write-Host "DRY-RUN: no changes will be made." -ForegroundColor Yellow
+} elseif (-not $Yes) {
+    Write-Host "Plan: WSL2 bootstrap - Windows features, distro '$Distro', $WslConfigPath (backed up if present)." -ForegroundColor Cyan
+    $answer = Read-Host "Proceed? [y/N]"
+    if ($answer -notmatch '^[yY]') {
+        throw "Aborted - no changes were made. Unattended: -Yes. Preview: -DryRun."
+    }
+}
+
 # --- WSL presence ------------------------------------------------------------
 $wslCmd = Get-Command wsl.exe -ErrorAction SilentlyContinue
 if (-not $wslCmd) {
-    Write-Host "WSL not found - installing WSL2 (no distro yet)..." -ForegroundColor Cyan
-    wsl --install --no-distribution
-    if ($LASTEXITCODE -ne 0) { throw "wsl --install failed. A reboot is likely required - reboot and re-run this script." }
-    Write-Warning "WSL was installed. If this is the first time, REBOOT, then re-run this script."
+    if ($DryRun) {
+        Write-Host "[DRY-RUN] wsl --install --no-distribution" -ForegroundColor Yellow
+    } else {
+        Write-Host "WSL not found - installing WSL2 (no distro yet)..." -ForegroundColor Cyan
+        wsl --install --no-distribution
+        if ($LASTEXITCODE -ne 0) { throw "wsl --install failed. A reboot is likely required - reboot and re-run this script." }
+        Write-Warning "WSL was installed. If this is the first time, REBOOT, then re-run this script."
+    }
 } else {
     Write-Host "WSL already installed." -ForegroundColor Green
 }
@@ -47,12 +67,16 @@ if (-not $wslCmd) {
 $distros = @((wsl -l -q) 2>$null) | ForEach-Object { ($_ -replace "\x00", "").Trim() } | Where-Object { $_ }
 $installed = $distros | Where-Object { $_ -eq $Distro }
 if (-not $installed) {
-    Write-Host "Installing distro '$Distro' (no launch)..." -ForegroundColor Cyan
-    wsl --install -d $Distro --no-launch
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "Available distros:" -ForegroundColor Yellow
-        wsl --list --online
-        throw "wsl --install -d $Distro failed. Pick a distro from the list above."
+    if ($DryRun) {
+        Write-Host "[DRY-RUN] wsl --install -d $Distro --no-launch" -ForegroundColor Yellow
+    } else {
+        Write-Host "Installing distro '$Distro' (no launch)..." -ForegroundColor Cyan
+        wsl --install -d $Distro --no-launch
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "Available distros:" -ForegroundColor Yellow
+            wsl --list --online
+            throw "wsl --install -d $Distro failed. Pick a distro from the list above."
+        }
     }
 } else {
     Write-Host "Distro '$Distro' already installed." -ForegroundColor Green
@@ -61,6 +85,8 @@ if (-not $installed) {
 # --- .wslconfig ---------------------------------------------------------------
 if ($SkipWslConfig) {
     Write-Host "Skipping .wslconfig (-SkipWslConfig)." -ForegroundColor Yellow
+} elseif ($DryRun) {
+    Write-Host "[DRY-RUN] would back up (if present) and write $WslConfigPath (memory=${MemoryGB}GB, processors=$Processors, swap=${SwapGB}GB, autoMemoryReclaim=gradual, sparseVhd=true)" -ForegroundColor Yellow
 } else {
     if (Test-Path $WslConfigPath) {
         $backup = "$WslConfigPath.bak.$(Get-Date -Format yyyyMMdd-HHmmss)"
@@ -87,8 +113,17 @@ sparseVhd=true
 }
 
 # --- apply --------------------------------------------------------------------
-Write-Host "Shutting down WSL so settings apply at next start..." -ForegroundColor Cyan
-wsl --shutdown 2>$null
+if ($DryRun) {
+    Write-Host "[DRY-RUN] wsl --shutdown (to apply settings at next start)" -ForegroundColor Yellow
+} else {
+    Write-Host "Shutting down WSL so settings apply at next start..." -ForegroundColor Cyan
+    wsl --shutdown 2>$null
+}
+
+if ($DryRun) {
+    Write-Host "DRY-RUN complete - nothing was changed." -ForegroundColor Yellow
+    return
+}
 
 Write-Host ""
 Write-Host "Done. Next steps:" -ForegroundColor Green

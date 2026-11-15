@@ -33,8 +33,8 @@ kit_detect_platform() {
 }
 
 # Exit 1 unless running inside WSL2. The one override is KIT_ALLOW_LINUX=1 —
-# an explicit operator escape hatch (CI, native-Linux CI hosts); it is never
-# set by the kit itself.
+# an explicit operator escape hatch (CI, native-Linux hosts); never set by the
+# kit itself.
 kit_require_wsl2() {
   local platform
   platform="$(kit_detect_platform)"
@@ -59,4 +59,58 @@ kit_require_wsl2() {
       exit 1
       ;;
   esac
+}
+
+# --- mutation policy -----------------------------------------------------------
+# Every system-mutating command in the kit's scripts goes through kit_run;
+# every script that mutates asks for consent via kit_consent first. This is
+# what makes KIT_DRY_RUN=1 (preview) and KIT_YES=1 (unattended) universal.
+
+kit_is_dry_run() { [[ "${KIT_DRY_RUN:-0}" == "1" ]]; }
+
+# kit_run <command...> — execute; or, in dry-run mode, print the exact
+# command with a [DRY-RUN] prefix and change nothing.
+#
+# Pipe caveat: in dry-run the kit_run side of a pipeline does not read stdin,
+# so a producer (`foo | kit_run bar`) would get SIGPIPE. For stdin-fed
+# mutations use a herestring:  kit_run sudo tee FILE > /dev/null <<< "$data"
+kit_run() {
+  if kit_is_dry_run; then
+    # stderr on purpose: callers often redirect kit_run's stdout (tee > /dev/null),
+    # and the dry-run notice must survive that.
+    printf '[DRY-RUN] %s\n' "$*" >&2
+    return 0
+  fi
+  "$@"
+}
+
+kit_dry_run_footer() {
+  info "DRY-RUN complete - nothing was changed. Re-run without KIT_DRY_RUN to apply."
+}
+
+# kit_consent <summary...> — print the change summary, then require consent:
+#   dry-run           -> no prompt (nothing will change)
+#   KIT_YES=1 / --yes -> proceed unattended
+#   stdin y/yes       -> proceed
+#   stdin n / EOF     -> exit 1 with the unattended hint; nothing was touched
+kit_consent() {
+  if kit_is_dry_run; then
+    info "DRY-RUN: showing what would happen - no confirmation needed."
+    printf '%s\n' "$*"
+    return 0
+  fi
+  if [[ "${KIT_YES:-0}" == "1" ]]; then
+    info "Unattended mode (KIT_YES=1): skipping confirmation."
+    return 0
+  fi
+  printf '%s\n' "$*"
+  local answer=""
+  printf 'Proceed? [y/N] '
+  if read -r answer; then
+    case "$answer" in
+      y|Y|yes|Yes|YES) return 0 ;;
+    esac
+  fi
+  warn "Aborted - no changes were made. For unattended runs: KIT_YES=1 (or --yes); to preview: KIT_DRY_RUN=1."
+  exit 1
 }

@@ -103,7 +103,28 @@ fix() {
     warn "fix needs root: run with sudo, or as root with KIT_ALLOW_ROOT=1 SUDO_USER=<user>"
     exit 1
   fi
-  TARGET_USER="${SUDO_USER:-$USER}"
+  TARGET_USER="${SUDO_USER:-${USER:-}}"
+  if [[ -z "$TARGET_USER" ]]; then
+    TARGET_USER="$(id -un 2>/dev/null || true)"
+  fi
+  [[ -n "$TARGET_USER" ]] || { warn "Cannot determine the invoking user (SUDO_USER/USER/id all unavailable)."; exit 1; }
+
+  if kit_is_dry_run; then
+    info "DRY-RUN plan for 'fix' (nothing will be changed):"
+    [ -n "$DESKTOP_UNITS" ]    && echo "  - systemctl mask --now --force: $(echo "$DESKTOP_UNITS" | sed -e 's|.*/||' | tr '\n' ' ')"
+    [ -n "$DESKTOP_SYMLINKS" ] && echo "  - rm Desktop CLI symlinks: $(echo "$DESKTOP_SYMLINKS" | sed -e 's|.*/||' | tr '\n' ' ')"
+    [[ "$SOCKET_LINK" == *"docker-desktop"* ]] && echo "  - systemctl restart docker.socket docker"
+    [ -n "$TARGET_USER" ] && [ "$TARGET_USER" != "root" ] && echo "  - pin default docker context 'kit-engine' to $SOCKET for $TARGET_USER"
+    kit_dry_run_footer
+    return 0
+  fi
+
+  kit_consent "protect-distro 'fix' plan:
+  - mask Desktop proxy systemd units (reversible: systemctl unmask)
+  - remove Desktop CLI symlinks from /usr/local/bin
+  - restart docker.socket/docker to restore the local socket
+  - pin default docker context 'kit-engine' to $SOCKET for $TARGET_USER
+Reversible - full checklist in docs/migration.md."
 
   if [ -n "$DESKTOP_UNITS" ]; then
     for u in $DESKTOP_UNITS; do

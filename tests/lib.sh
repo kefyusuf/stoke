@@ -42,23 +42,29 @@ assert_contains() { # assert_contains <haystack> <needle>
 # sandbox_new creates a temp dir; stub_cmd places a fake command there that
 # logs its arguments and emits a canned stdout / exit code. sandbox_path
 # prepends it to PATH so sourced script code resolves the stub first.
+#
+# REAL_* capture the true binaries before any sandbox PATH is active, so the
+# harness never trips over its own stubs (e.g. chmod on new stub files).
 
 SB_BIN=""
-SB_LOG=""
+STUB_LOG=""
+REAL_CHMOD="$(command -v chmod 2>/dev/null || echo chmod)"
+REAL_MKTEMP="$(command -v mktemp 2>/dev/null || echo mktemp)"
 
 sandbox_new() {
-  local dir; dir="$(mktemp -d)"
+  local dir; dir="$("$REAL_MKTEMP" -d)"
   SB_BIN="$dir/bin"
-  SB_LOG="$dir/commands.log"
+  STUB_LOG="$dir/commands.log"
   mkdir -p "$SB_BIN"
-  : > "$SB_LOG"
-  export SB_LOG
+  : > "$STUB_LOG"
+  export STUB_LOG
 }
 
-sandbox_path() { PATH="$SB_BIN:$PATH"; }
+SANDBOX_ORIG_PATH="${SANDBOX_ORIG_PATH:-$PATH}"
+sandbox_path() { PATH="$SB_BIN:$SANDBOX_ORIG_PATH"; }
 
-sandbox_calls() { cat "$SB_LOG"; }          # every stub invocation so far
-sandbox_reset() { : > "$SB_LOG"; }          # clear the invocation log
+sandbox_calls() { cat "$STUB_LOG"; }        # every stub invocation so far
+sandbox_reset() { : > "$STUB_LOG"; }        # clear the invocation log
 
 # stub_cmd <name> <stdout> [exit_code]
 stub_cmd() {
@@ -69,7 +75,7 @@ printf '%s\n' "$name \$*" >> "\$STUB_LOG"
 printf '%s\n' "$out"
 exit $code
 EOF
-  chmod +x "$SB_BIN/$name"
+  "$REAL_CHMOD" +x "$SB_BIN/$name"
 }
 
 # suite_done <name> — print the tally; non-zero exit marks the suite failed.
