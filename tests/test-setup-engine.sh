@@ -48,7 +48,7 @@ EOF
   printf 'ID=ubuntu\nVERSION_CODENAME=jammy\n' > "$OSREL"
   ENGINE_OUT="$( ( export KIT_OS_RELEASE_FILE="$OSREL"
                    if [[ -n "${envspec:-}" ]]; then export "${envspec%%=*}"="${envspec#*=}"; fi
-                   bash "$ENGINE" "$@" </dev/null ) 2>&1 )"
+                   bash "$ENGINE" "$@" </dev/null ) 2>&1 3>&1 )"
   ENGINE_RC=$?
 }
 
@@ -118,7 +118,7 @@ EOF
                    stub_cmd systemctl 'running'; stub_cmd groupadd ''; stub_cmd usermod ''
                    OSREL="$(mktemp)"; printf 'ID=ubuntu\nVERSION_CODENAME=jammy\n' > "$OSREL"
                    export KIT_OS_RELEASE_FILE="$OSREL"
-                   printf 'y\n' | bash "$ENGINE" ) 2>&1 )"
+                   printf 'y\n' | bash "$ENGINE" ) 2>&1 3>&1 )"
 t "piped 'y' consents and completes" assert_contains "$engine_out_y" "Setup complete"
 
 suite_done "setup-engine"

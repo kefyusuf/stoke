@@ -66,6 +66,11 @@ kit_require_wsl2() {
 # every script that mutates asks for consent via kit_consent first. This is
 # what makes KIT_DRY_RUN=1 (preview) and KIT_YES=1 (unattended) universal.
 
+# Dry-run notices go to fd 3 (a copy of stderr, opened at lib load) so that
+# callers redirecting a kit_run call's stdout AND/OR stderr (`> /dev/null`,
+# `2>/dev/null || true`) can never swallow a notice.
+exec 3>&2
+
 kit_is_dry_run() { [[ "${KIT_DRY_RUN:-0}" == "1" ]]; }
 
 # kit_run <command...> — execute; or, in dry-run mode, print the exact
@@ -76,9 +81,7 @@ kit_is_dry_run() { [[ "${KIT_DRY_RUN:-0}" == "1" ]]; }
 # mutations use a herestring:  kit_run sudo tee FILE > /dev/null <<< "$data"
 kit_run() {
   if kit_is_dry_run; then
-    # stderr on purpose: callers often redirect kit_run's stdout (tee > /dev/null),
-    # and the dry-run notice must survive that.
-    printf '[DRY-RUN] %s\n' "$*" >&2
+    printf '[DRY-RUN] %s\n' "$*" >&3
     return 0
   fi
   "$@"

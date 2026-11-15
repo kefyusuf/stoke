@@ -29,9 +29,10 @@ kit_run kit-fake-mutation --do-work >/dev/null
 t "kit_run executes in normal mode (stub got called)" \
   assert_contains "$(sandbox_calls)" "kit-fake-mutation --do-work"
 
-# Dry-run: print the exact command, execute nothing.
+# Dry-run: print the exact command, execute nothing (3>&1 captures the
+# fd-3 notice channel into the same string).
 sandbox_reset
-out="$(KIT_DRY_RUN=1 kit_run sudo apt-get install -y docker-ce 2>&1)"
+out="$(KIT_DRY_RUN=1 kit_run sudo apt-get install -y docker-ce 3>&1 2>&1)"
 t "kit_run: dry-run prints the exact command" \
   assert_contains "$out" "[DRY-RUN] sudo apt-get install -y docker-ce"
 t "kit_run: dry-run executes nothing" \
