@@ -6,6 +6,7 @@ Türkçe README: [README.tr.md](README.tr.md)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![ci](https://github.com/kefyusuf/stoke/actions/workflows/ci.yml/badge.svg)](https://github.com/kefyusuf/stoke/actions/workflows/ci.yml)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/kefyusuf/stoke/badge)](https://scorecard.dev/viewer/?uri=github.com/kefyusuf/stoke)
 
 > ⚠️ **Review before running.** These scripts make system-level changes (Windows
 > features, apt/systemd inside WSL, root-owned files). The intended workflow is

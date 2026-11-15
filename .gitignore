@@ -14,3 +14,6 @@ daemon.json.bak
 # Scratch dirs used while benchmarking
 .tmp/
 *.log
+
+# Local launch/marketing drafts - intentionally never published from here
+.local/
