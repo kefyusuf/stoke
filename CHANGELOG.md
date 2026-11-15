@@ -4,7 +4,9 @@ All notable changes to stoke. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions are semver-ish
 (the kit is scripts + templates, so "breaking" = a template/setup contract change).
 
-## [Unreleased]
+## [1.0.0] - 2026-11-15
+
+First public release.
 
 ### Added
 
@@ -48,7 +50,7 @@ All notable changes to stoke. Format loosely follows
 - SIGPIPE (rc 141) when piping into `kit_run ... tee` in dry-run mode; file
   writes use the herestring pattern (documented in the lib)
 
-## [0.1.0] - 2026-11-05
+## 0.1.0 - 2026-11-05 (pre-public history)
 
 First public release.
 
@@ -82,4 +84,4 @@ First public release.
 - Docker Desktop can stay installed (idle or parallel) — see
   [docs/migration.md](docs/migration.md)
 
-[0.1.0]: https://github.com/<owner>/stoke/releases/tag/v0.1.0
+[1.0.0]: https://github.com/kefyusuf/stoke/releases/tag/v1.0.0

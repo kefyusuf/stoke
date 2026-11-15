@@ -5,9 +5,7 @@
 English README: [README.md](README.md)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-<!-- CI badge — GitHub reposunu oluşturunca yorumdan çıkar (<owner> yerine):
-[![ci](https://github.com/<owner>/stoke/actions/workflows/ci.yml/badge.svg)](https://github.com/<owner>/stoke/actions/workflows/ci.yml)
--->
+[![ci](https://github.com/kefyusuf/stoke/actions/workflows/ci.yml/badge.svg)](https://github.com/kefyusuf/stoke/actions/workflows/ci.yml)
 
 > ⚠️ **Çalıştırmadan önce okuyun.** Bu scriptler sistem düzeyinde değişiklik yapar
 > (Windows özellikleri, WSL içi apt/systemd, root sahipli dosyalar). Amaçlanan akış
