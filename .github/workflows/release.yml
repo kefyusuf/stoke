@@ -65,7 +65,7 @@ jobs:
       - name: Attach the attestation bundle to the release
         env:
           GH_TOKEN: ${{ github.token }}
-          BUNDLE: ${{ steps.attest.outputs.bundle_path }}
+          BUNDLE: ${{ steps.attest.outputs.bundle-path }}
         run: |
           set -euo pipefail
           cp "$BUNDLE" attestation.intoto.jsonl
