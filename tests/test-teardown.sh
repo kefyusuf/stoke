@@ -24,6 +24,8 @@ WSL2_REL='5.15.167.4-microsoft-standard-WSL2'
 SUITE_HOME="$("$REAL_MKTEMP" -d)"
 export KIT_WSLCONFIG="$SUITE_HOME/.wslconfig"
 export KIT_DOCKER_DATA_ROOT="$SUITE_HOME/docker-data"
+# no ownership record here: exercises the warned full-reversal fallback
+export KIT_STATE_DIR="$SUITE_HOME/state"
 
 td_run() {
   local envspec="$1"; shift || true
@@ -36,7 +38,7 @@ printf '%s\n' "sudo $*" >> "$STUB_LOG"
 exec "$@"
 EOF
   "$REAL_CHMOD" +x "$SB_BIN/sudo"
-  for c in systemctl apt-get docker gpasswd groupdel rm cp; do stub_cmd "$c" ''; done
+  for c in systemctl apt-get docker gpasswd groupdel rm cp rmdir; do stub_cmd "$c" ''; done
   # optional per-run stubs: TD_EXTRA_STUBS=("name=canned stdout" ...)
   local spec
   for spec in ${TD_EXTRA_STUBS[@]+"${TD_EXTRA_STUBS[@]}"}; do

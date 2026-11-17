@@ -8,6 +8,12 @@ All notable changes to stoke. Format loosely follows
 
 ### Added
 
+- Ownership manifest: `setup-engine.sh` snapshots the pre-install state into
+  `/var/lib/stoke/ownership.env` (first mutation, never overwritten on re-run)
+  and reuses a pre-existing Docker Engine instead of reinstalling;
+  `teardown.sh` reverses only kit-created resources (allowlist parse, warned
+  full-reversal fallback for pre-ownership installs) and reports removed
+  legacy packages with a restore command. Covered by `tests/test-ownership.sh`
 - CI: `ci-ok` aggregation job - one stable merge-gate check covering lint,
   secrets and the whole template matrix (matrix renames can't weaken the gate)
 - CI: PSScriptAnalyzer lint for the PowerShell scripts (Write-Host excluded

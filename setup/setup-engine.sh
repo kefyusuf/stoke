@@ -77,38 +77,90 @@ if [[ -z "$TARGET_USER" ]]; then
 fi
 [[ -n "$TARGET_USER" ]] || { warn "Cannot determine the invoking user (SUDO_USER/USER/id all unavailable)."; exit 1; }
 
+# --- ownership snapshot (read-only probes, before any mutation) ------------------
+# Records what pre-existed so teardown reverses ONLY what the kit created.
+STATE_DIR="${KIT_STATE_DIR:-/var/lib/stoke}"
+OWNERSHIP="$STATE_DIR/ownership.env"
+APT_LIST="${KIT_APT_LIST:-/etc/apt/sources.list.d/docker.list}"
+APT_KEYRING="${KIT_APT_KEYRING:-/etc/apt/keyrings/docker.asc}"
+
+kit_pkg_installed() {
+  [[ "$(dpkg-query -W -f='${Status}' "$1" 2>/dev/null || true)" == *"install ok installed"* ]]
+}
+
+DOCKER_CE_PRESENT=0; kit_pkg_installed docker-ce && DOCKER_CE_PRESENT=1
+GROUP_PRESENT=0; getent group docker >/dev/null 2>&1 && GROUP_PRESENT=1
+USER_IN_GROUP=0
+[[ " $(id -nG "$TARGET_USER" 2>/dev/null || true) " == *" docker "* ]] && USER_IN_GROUP=1
+APT_REPO_PRESENT=0
+[[ -f "$APT_LIST" || -f "$APT_KEYRING" ]] && APT_REPO_PRESENT=1
+LEGACY_PRESENT=""
+for pkg in docker.io docker-doc docker-compose podman-docker containerd runc; do
+  kit_pkg_installed "$pkg" && LEGACY_PRESENT="${LEGACY_PRESENT:+$LEGACY_PRESENT }$pkg"
+done
+WSLCONF_SYSTEMD=0; grep -qs 'systemd=true' /etc/wsl.conf 2>/dev/null && WSLCONF_SYSTEMD=1
+
 # --- plan + consent ---------------------------------------------------------------
-kit_consent "setup-engine plan (distro: $ID/$VERSION_CODENAME):
-  - apt: add Docker's official repo (/etc/apt/keyrings/docker.asc, sources.list.d/docker.list)
+if [[ "$DOCKER_CE_PRESENT" == 1 ]]; then
+  kit_consent "setup-engine plan (distro: $ID/$VERSION_CODENAME):
+  - existing Docker Engine detected - REUSING it (no package changes)
+  - ownership: record pre-install state in $OWNERSHIP (if no record yet)
+  - systemd: enable docker.service (writes systemd=true into /etc/wsl.conf only if needed)
+  - group: ensure 'docker' group and '$TARGET_USER' membership"
+else
+  kit_consent "setup-engine plan (distro: $ID/$VERSION_CODENAME):
+  - ownership: record pre-install state in $OWNERSHIP
+  - apt: add Docker's official repo ($APT_KEYRING, $APT_LIST)
   - apt: remove conflicting legacy packages (docker.io, docker-doc, docker-compose, podman-docker, containerd, runc)
   - apt: install docker-ce, docker-ce-cli, containerd.io, docker-buildx-plugin, docker-compose-plugin
   - systemd: enable docker.service (writes systemd=true into /etc/wsl.conf only if needed)
   - group: create 'docker' and add '$TARGET_USER' to it"
+fi
 
-info "Installing prerequisites"
-kit_run sudo apt-get update
-kit_run sudo apt-get install -y ca-certificates curl
+# The ownership record is the first mutation; a re-run never overwrites the
+# original snapshot (it describes the state before the FIRST kit install).
+if [[ -f "$OWNERSHIP" ]]; then
+  info "Ownership record exists ($OWNERSHIP) - keeping the original snapshot"
+else
+  manifest="KIT_OWNERSHIP_VERSION=1
+DOCKER_CE_PRESENT=$DOCKER_CE_PRESENT
+GROUP_PRESENT=$GROUP_PRESENT
+USER_IN_GROUP=$USER_IN_GROUP
+APT_REPO_PRESENT=$APT_REPO_PRESENT
+LEGACY_PRESENT=$LEGACY_PRESENT
+WSLCONF_SYSTEMD=$WSLCONF_SYSTEMD"
+  kit_run sudo install -m 0755 -d "$STATE_DIR"
+  kit_run sudo tee "$OWNERSHIP" > /dev/null <<< "$manifest"
+fi
 
-info "Adding Docker's official apt repository ($ID / $VERSION_CODENAME)"
-kit_run sudo install -m 0755 -d /etc/apt/keyrings
-kit_run sudo curl -fsSL "https://download.docker.com/$DOCKER_REPO_PATH/gpg" -o /etc/apt/keyrings/docker.asc
-kit_run sudo chmod a+r /etc/apt/keyrings/docker.asc
-sources_line="deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/$DOCKER_REPO_PATH $VERSION_CODENAME stable"
-# Herestring (not `echo |`) on purpose: in dry-run the consumer side of
-# kit_run does not read stdin, and a pipe producer would die of SIGPIPE.
-kit_run sudo tee /etc/apt/sources.list.d/docker.list > /dev/null <<< "$sources_line"
+if [[ "$DOCKER_CE_PRESENT" == 1 ]]; then
+  info "Existing Docker Engine detected - reusing it (no package changes)"
+else
+  info "Installing prerequisites"
+  kit_run sudo apt-get update
+  kit_run sudo apt-get install -y ca-certificates curl
 
-info "Removing conflicting legacy packages (if any)"
-for pkg in docker.io docker-doc docker-compose podman-docker containerd runc; do
-  kit_run sudo apt-get remove -y "$pkg" 2>/dev/null || true
-done
+  info "Adding Docker's official apt repository ($ID / $VERSION_CODENAME)"
+  kit_run sudo install -m 0755 -d /etc/apt/keyrings
+  kit_run sudo curl -fsSL "https://download.docker.com/$DOCKER_REPO_PATH/gpg" -o "$APT_KEYRING"
+  kit_run sudo chmod a+r "$APT_KEYRING"
+  sources_line="deb [arch=$(dpkg --print-architecture) signed-by=$APT_KEYRING] https://download.docker.com/$DOCKER_REPO_PATH $VERSION_CODENAME stable"
+  # Herestring (not `echo |`) on purpose: in dry-run the consumer side of
+  # kit_run does not read stdin, and a pipe producer would die of SIGPIPE.
+  kit_run sudo tee "$APT_LIST" > /dev/null <<< "$sources_line"
 
-info "Refreshing apt lists (docker repo just added)"
-kit_run sudo apt-get update
+  info "Removing conflicting legacy packages (if any)"
+  for pkg in docker.io docker-doc docker-compose podman-docker containerd runc; do
+    kit_run sudo apt-get remove -y "$pkg" 2>/dev/null || true
+  done
 
-info "Installing Docker Engine + buildx + compose plugin"
-kit_run sudo apt-get install -y docker-ce docker-ce-cli containerd.io \
-  docker-buildx-plugin docker-compose-plugin
+  info "Refreshing apt lists (docker repo just added)"
+  kit_run sudo apt-get update
+
+  info "Installing Docker Engine + buildx + compose plugin"
+  kit_run sudo apt-get install -y docker-ce docker-ce-cli containerd.io \
+    docker-buildx-plugin docker-compose-plugin
+fi
 
 # systemd: needed for the docker service to persist across WSL restarts.
 # Judge by the live systemd state, not by parsing /etc/wsl.conf (fragile).

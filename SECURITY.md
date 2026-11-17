@@ -15,11 +15,11 @@ anything, read it — that is the intended workflow, not paranoia:
 | Script | What it changes | Privilege |
 |---|---|---|
 | `setup/setup-wsl.ps1` | Windows features, `%UserProfile%\.wslconfig` (backs up existing) | Administrator |
-| `setup/setup-engine.sh` | apt repositories + packages (Docker's official repo), `/etc/wsl.conf`, docker group | sudo |
+| `setup/setup-engine.sh` | apt repositories + packages (Docker's official repo), `/etc/wsl.conf`, docker group, ownership record `/var/lib/stoke/ownership.env`; reuses a pre-existing engine | sudo |
 | `setup/setup-nerdctl.sh` | apt packages, tarballs into `/usr/local`, systemd services | sudo |
 | `setup/protect-distro.sh fix` | removes Desktop-injected files, masks units, creates a docker context | sudo |
 | `setup/windows-context.ps1` | systemd drop-in in the distro: **unauthenticated** loopback-only TCP listener (127.0.0.1:2375) + Windows docker context `kit-wsl`; opt-in, `-Undo` reverses both | Administrator (Windows) / root (distro) |
-| `setup/teardown.sh` | reverse of everything above: containers down, contexts + bridge drop-in removed, services off, group out, packages purged, apt repo files removed; `/var/lib/docker` and `.wslconfig` only with `--purge-data` / `--restore-wslconfig` | sudo |
+| `setup/teardown.sh` | reverse of everything above, **ownership-aware**: only kit-created groups/packages/repo files are removed (pre-existing ones are kept); containers down, contexts + bridge drop-in removed, services off; `/var/lib/docker` and `.wslconfig` only with `--purge-data` / `--restore-wslconfig` | sudo |
 | `cache-stack/*` | local Docker containers bound to `127.0.0.1` only | docker |
 
 Hardening already built in:
@@ -36,6 +36,12 @@ Hardening already built in:
   Windows-side `kit-wsl` context via interop when a Windows docker CLI is
   reachable, otherwise it points at `windows-context.ps1 -Undo`), with data
   and config deletes strictly opt-in.
+- **Ownership manifest**: `setup-engine.sh` snapshots the pre-install state
+  (packages, docker group, membership, apt repo files) into
+  `/var/lib/stoke/ownership.env` before mutating anything; a re-run never
+  overwrites the original snapshot. `teardown.sh` parses it by allowlist
+  (never sourced/eval'd) and reverses only what the kit created. Installs
+  that predate the record get a warned full-reversal fallback.
 - All downloaded tarballs are **sha256-pinned per architecture** and verified
   before extraction (`setup-nerdctl.sh`).
 - apt packages come from **Docker's official signed repository only**.

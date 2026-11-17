@@ -44,9 +44,17 @@ EOF
   stub_cmd systemctl 'running'
   stub_cmd groupadd ''
   stub_cmd usermod ''
+  # ownership probes: force the "fresh host" scenario regardless of what the
+  # real CI runner has installed (ubuntu-latest ships docker-ce)
+  stub_cmd dpkg-query '' 1
+  stub_cmd getent '' 1
+  stub_cmd id 'kitrunner'
   OSREL="$(mktemp)"
   printf 'ID=ubuntu\nVERSION_CODENAME=jammy\n' > "$OSREL"
   ENGINE_OUT="$( ( export KIT_OS_RELEASE_FILE="$OSREL"
+                   export KIT_STATE_DIR="${SB_BIN%/bin}/state"
+                   export KIT_APT_LIST="${SB_BIN%/bin}/docker.list"
+                   export KIT_APT_KEYRING="${SB_BIN%/bin}/docker.asc"
                    if [[ -n "${envspec:-}" ]]; then export "${envspec%%=*}"="${envspec#*=}"; fi
                    bash "$ENGINE" "$@" </dev/null ) 2>&1 3>&1 )"
   ENGINE_RC=$?
@@ -116,8 +124,12 @@ EOF
                    stub_cmd apt-get ''; stub_cmd curl ''; stub_cmd install ''
                    stub_cmd chmod ''; stub_cmd tee ''; stub_cmd dpkg 'amd64'
                    stub_cmd systemctl 'running'; stub_cmd groupadd ''; stub_cmd usermod ''
+                   stub_cmd dpkg-query '' 1; stub_cmd getent '' 1; stub_cmd id 'kitrunner'
                    OSREL="$(mktemp)"; printf 'ID=ubuntu\nVERSION_CODENAME=jammy\n' > "$OSREL"
                    export KIT_OS_RELEASE_FILE="$OSREL"
+                   export KIT_STATE_DIR="${SB_BIN%/bin}/state"
+                   export KIT_APT_LIST="${SB_BIN%/bin}/docker.list"
+                   export KIT_APT_KEYRING="${SB_BIN%/bin}/docker.asc"
                    printf 'y\n' | bash "$ENGINE" ) 2>&1 3>&1 )"
 t "piped 'y' consents and completes" assert_contains "$engine_out_y" "Setup complete"
 

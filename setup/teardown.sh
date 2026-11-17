@@ -31,6 +31,8 @@ Usage: setup/teardown.sh [--dry-run] [--yes] [--purge-data] [--restore-wslconfig
   -h, --help            this text
 
 Default behavior: docker data root and .wslconfig are LEFT in place.
+Resources that pre-existed the kit are kept (ownership record:
+/var/lib/stoke/ownership.env, written by setup-engine.sh).
 The WSL distro itself (and your sources in ~/work) is never touched.
 USAGE
 }
@@ -83,6 +85,30 @@ WSLCONFIG="${KIT_WSLCONFIG:-$(kit_wslconfig_default)}"
 WSLCONFIG="${WSLCONFIG:-${HOME:-/root}/.wslconfig}"
 DATA_ROOT="${KIT_DOCKER_DATA_ROOT:-/var/lib/docker}"
 TCP_DROPIN="${KIT_TCP_DROPIN:-/etc/systemd/system/docker.service.d/kit-tcp.conf}"
+STATE_DIR="${KIT_STATE_DIR:-/var/lib/stoke}"
+OWNERSHIP="$STATE_DIR/ownership.env"
+APT_LIST="${KIT_APT_LIST:-/etc/apt/sources.list.d/docker.list}"
+APT_KEYRING="${KIT_APT_KEYRING:-/etc/apt/keyrings/docker.asc}"
+
+# --- ownership: reverse ONLY what the kit created -------------------------------
+# setup-engine.sh snapshots the pre-install state into ownership.env. Defaults
+# are full reversal (OWN_*=1) for installs that predate ownership tracking.
+# The record is parsed by allowlist - never sourced/eval'd.
+OWN_DOCKER_CE=1; OWN_GROUP=1; OWN_USER=1; OWN_APT_REPO=1
+LEGACY_REMOVED=""
+if [[ -f "$OWNERSHIP" ]]; then
+  while IFS='=' read -r key val; do
+    case "$key" in
+      DOCKER_CE_PRESENT) [[ "$val" == 1 ]] && OWN_DOCKER_CE=0 ;;
+      GROUP_PRESENT)     [[ "$val" == 1 ]] && OWN_GROUP=0 ;;
+      USER_IN_GROUP)     [[ "$val" == 1 ]] && OWN_USER=0 ;;
+      APT_REPO_PRESENT)  [[ "$val" == 1 ]] && OWN_APT_REPO=0 ;;
+      LEGACY_PRESENT)    LEGACY_REMOVED="$val" ;;
+    esac
+  done < "$OWNERSHIP"
+else
+  warn "No ownership record at $OWNERSHIP - full reversal (install predates ownership tracking)"
+fi
 
 # --- plan + consent ---------------------------------------------------------------
 kit_consent "teardown plan (user: $TARGET_USER):
@@ -90,9 +116,9 @@ kit_consent "teardown plan (user: $TARGET_USER):
   - docker: remove context 'kit-engine'
   - bridge: remove kit-tcp.conf drop-in + Windows 'kit-wsl' context (if present)
   - systemd: disable docker + docker.socket
-  - group: remove $TARGET_USER from docker, delete the group
-  - apt: purge docker-ce, CLI, containerd.io, buildx, compose plugin
-  - files: remove /etc/apt/sources.list.d/docker.list + keyrings/docker.asc
+  - group: remove $TARGET_USER from docker, delete the group (only if kit-created)
+  - apt: purge docker-ce, CLI, containerd.io, buildx, compose plugin (only if kit-installed)
+  - files: remove $APT_LIST + $APT_KEYRING (only if kit-added)
   KEPT unless flagged: docker data root, .wslconfig, wsl.conf systemd=true"
 
 # 1. containers (needs a reachable engine; harmless if already gone)
@@ -122,16 +148,30 @@ fi
 # 3. services
 kit_run sudo systemctl disable --now docker docker.socket 2>/dev/null || true
 
-# 4. group
-kit_run sudo gpasswd -d "$TARGET_USER" docker 2>/dev/null || true
-kit_run sudo groupdel docker 2>/dev/null || true
+# 4. group (only what the kit created)
+if [[ "$OWN_USER" == 1 ]]; then
+  kit_run sudo gpasswd -d "$TARGET_USER" docker 2>/dev/null || true
+fi
+if [[ "$OWN_GROUP" == 1 ]]; then
+  kit_run sudo groupdel docker 2>/dev/null || true
+fi
 
-# 5. packages
-kit_run sudo apt-get purge -y docker-ce docker-ce-cli containerd.io \
-  docker-buildx-plugin docker-compose-plugin 2>/dev/null || true
+# 5. packages (only if the kit installed them)
+if [[ "$OWN_DOCKER_CE" == 1 ]]; then
+  kit_run sudo apt-get purge -y docker-ce docker-ce-cli containerd.io \
+    docker-buildx-plugin docker-compose-plugin 2>/dev/null || true
+else
+  info "Docker Engine pre-existed the kit - keeping the packages"
+fi
 
-# 6. apt repo + keyring
-kit_run sudo rm -f /etc/apt/sources.list.d/docker.list /etc/apt/keyrings/docker.asc
+# 6. apt repo + keyring (only if the kit added them)
+if [[ "$OWN_APT_REPO" == 1 ]]; then
+  kit_run sudo rm -f "$APT_LIST" "$APT_KEYRING"
+fi
+if [[ -n "$LEGACY_REMOVED" ]]; then
+  info "Setup removed pre-existing legacy packages: $LEGACY_REMOVED"
+  info "Restore them manually if needed: sudo apt-get install $LEGACY_REMOVED"
+fi
 
 # 7. optional: .wslconfig restore
 if [[ "$RESTORE_WSLCONFIG" == "1" ]]; then
@@ -170,6 +210,14 @@ for f in /usr/local/bin/nerdctl /usr/local/bin/buildctl /usr/local/bin/buildkitd
     warn "nerdctl-variant artifact still present: $f (remove manually - teardown reverses only the Docker Engine path)"
   fi
 done
+
+# 10. the kit's ownership record - removed only when the kit's install was
+# reversed. If the engine pre-existed (and was kept), the record stays: it
+# still describes the true pre-kit state for any future run.
+if [[ "$OWN_DOCKER_CE" == 1 ]]; then
+  kit_run sudo rm -f "$OWNERSHIP"
+  kit_run sudo rmdir "$STATE_DIR" 2>/dev/null || true
+fi
 
 if kit_is_dry_run; then
   kit_dry_run_footer

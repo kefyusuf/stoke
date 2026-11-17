@@ -139,20 +139,20 @@ CI tarafı için aynı `CACHE_REF` değerini pipeline'a bağla — hazır şablo
 |---|---|
 | `setup/setup-wsl.ps1` | Windows tarafı: WSL2, distro, `.wslconfig` |
 | `setup/.wslconfig.template` | Yorumlu RAM/CPU/swap sınırları |
-| `setup/setup-engine.sh` | WSL içi Docker Engine + buildx + compose kurulumu |
+| `setup/setup-engine.sh` | WSL içi Docker Engine + buildx + compose kurulumu (mevcut motoru yeniden kullanır; sahiplik kaydı tutar) |
 | `setup/setup-nerdctl.sh` | Opsiyonel daha hafif varyant: containerd + nerdctl |
 | `setup/verify.sh` | Smoke test + cache benchmark (ilk ve ikinci build) |
 | `setup/doctor.sh` | Günlük salt-okunur sağlık raporu (FAIL/WARN/INFO satırları) |
 | `setup/init-project.sh` | Proje iskeletleyici: stack şablonu + sarmalayıcılar + proje-özel `.env` |
 | `setup/windows-context.ps1` | Kit motoruna Windows tarafından erişim (loopback TCP + context, `-Undo` dahil) |
-| `setup/teardown.sh` | Kit'in her mutasyonunu güvenli sırayla geri alır (veri/config silme kesinlikle opt-in) |
+| `setup/teardown.sh` | Kit mutasyonlarını güvenli sırayla geri alır; sahiplik kaydı sayesinde önceden var olan kaynakları korur (veri/config silme kesinlikle opt-in) |
 | `cache-stack/` | Yerel cache registry + pull-through mirror (compose) |
 | `templates/` | Genel multi-stage Dockerfile + cache uyumlu build sarmalayıcıları |
 | `templates/node-ts/` | Çalışan Node/TS örneği: prod + dev target'lar, pnpm store cache mount'ları, compose dev sunucusu |
 | `templates/rust/` | Çalışan Rust örneği: dummy-crate deps stage, cargo cache mount'ları, musl statik binary |
 | `templates/go/` | Çalışan Go örneği: GOMODCACHE/GOCACHE mount'ları, `scratch` prod imajı |
 | `ci/` | GitHub Actions (registry ve gha cache) ve GitLab CI şablonları |
-| `tests/` | Scriptlerin guard/dry-run/consent/teardown sözleşmeleri için sıfır-bağımlılık birim testleri (CI'da çalışır) |
+| `tests/` | Scriptlerin guard/dry-run/consent/ownership/teardown sözleşmeleri için sıfır-bağımlılık birim testleri (CI'da çalışır) |
 | `docs/` | Kanıtlar, derinlemesine rehberler, SSS |
 
 ## Dokümantasyon

@@ -140,20 +140,20 @@ For CI, wire the same `CACHE_REF` into your pipeline — ready-made templates ar
 |---|---|
 | `setup/setup-wsl.ps1` | Windows-side bootstrap: WSL2, distro, `.wslconfig` |
 | `setup/.wslconfig.template` | Annotated memory/CPU/swap limits |
-| `setup/setup-engine.sh` | WSL-side Docker Engine + buildx + compose install |
+| `setup/setup-engine.sh` | WSL-side Docker Engine + buildx + compose install (reuses an existing engine; snapshots ownership) |
 | `setup/setup-nerdctl.sh` | Optional lighter variant: containerd + nerdctl |
 | `setup/verify.sh` | Smoke test + cache benchmark (first vs second build) |
 | `setup/doctor.sh` | Daily read-only health report (FAIL/WARN/INFO lines) |
 | `setup/init-project.sh` | Project scaffolder: stack template + wrappers + project-scoped `.env` |
 | `setup/windows-context.ps1` | Windows-side docker access to the kit engine (loopback TCP + context, `-Undo` included) |
-| `setup/teardown.sh` | Reverses every kit mutation in safe order (data/config deletes strictly opt-in) |
+| `setup/teardown.sh` | Reverses kit mutations in safe order; keeps pre-existing resources via the ownership record (data/config deletes strictly opt-in) |
 | `cache-stack/` | Local cache registry + pull-through mirror (compose) |
 | `templates/` | Generic multi-stage Dockerfile + cache-aware build wrappers |
 | `templates/node-ts/` | Runnable Node/TS sample: prod + dev targets, pnpm store cache mounts, compose dev server |
 | `templates/rust/` | Runnable Rust sample: dummy-crate deps stage, cargo cache mounts, musl static binary |
 | `templates/go/` | Runnable Go sample: GOMODCACHE/GOCACHE mounts, `scratch` prod image |
 | `ci/` | GitHub Actions (registry & gha cache) and GitLab CI templates |
-| `tests/` | Zero-dependency unit suite for the scripts' guard/dry-run/consent/teardown contracts (runs in CI) |
+| `tests/` | Zero-dependency unit suite for the scripts' guard/dry-run/consent/ownership/teardown contracts (runs in CI) |
 | `docs/` | Evidence, deep-dive guides, FAQ |
 
 ## Documentation
