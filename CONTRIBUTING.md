@@ -18,9 +18,10 @@ see the triage table below.
 bash tests/run-tests.sh          # unit suites for the script contracts
 ```
 
-CI runs on every push: shellcheck (style severity), `bash -n`, the unit test
-suites, YAML parse, markdown link check, a gitleaks secret scan, and a real
-build + HTTP smoke of every template — mirror that locally before opening a PR:
+CI runs on every push: shellcheck (style severity), PSScriptAnalyzer for the
+PowerShell scripts, `bash -n`, the unit test suites, YAML parse, markdown link
+check, a gitleaks secret scan, and a real build + HTTP smoke of every template
+— mirror that locally before opening a PR:
 
 ```bash
 # (Git Bash on Windows: prefix the docker line with MSYS_NO_PATHCONV=1
@@ -32,6 +33,13 @@ docker run --rm -v "$PWD:/wk" -w /wk koalaman/shellcheck:stable \
   setup/lib/common.sh templates/build.sh
 for f in setup/*.sh setup/lib/*.sh templates/build.sh; do bash -n "$f"; done
 bash tests/run-tests.sh
+```
+
+```powershell
+# PowerShell side (pwsh; settings exclude Write-Host by design - console UI)
+Install-Module PSScriptAnalyzer -RequiredVersion 1.25.0 -Scope CurrentUser
+Invoke-ScriptAnalyzer -Path setup -Recurse -Settings PSScriptAnalyzerSettings.psd1
+Invoke-ScriptAnalyzer -Path templates -Recurse -Settings PSScriptAnalyzerSettings.psd1
 ```
 
 ## Nightly E2E triage

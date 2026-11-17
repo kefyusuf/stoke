@@ -6,8 +6,16 @@ All notable changes to stoke. Format loosely follows
 
 ## [Unreleased]
 
+### Added
+
+- CI: PSScriptAnalyzer lint for the PowerShell scripts (Write-Host excluded
+  by design - colored console UI; settings in `PSScriptAnalyzerSettings.psd1`)
+
 ### Fixed
 
+- Windows `build.ps1`: the default CACHE_REF collapsed to `127.0.0.1:5000/` -
+  PowerShell parsed `$dir:buildcache` as a drive-qualified variable; now
+  `${dir}:buildcache` (caught by the new analyzer lint)
 - Executable bit on all shipped `.sh` scripts: a fresh clone can run
   `./setup/*.sh` / `./build.sh` as documented (CI now guards the bits)
 - English README: one link caption was still Turkish

@@ -36,6 +36,18 @@ jobs:
             setup/verify.sh setup/teardown.sh setup/doctor.sh setup/init-project.sh \
             setup/lib/common.sh templates/build.sh
 
+      - name: PSScriptAnalyzer (PowerShell scripts)
+        shell: pwsh
+        run: |
+          Install-Module -Name PSScriptAnalyzer -RequiredVersion 1.25.0 -Force -Scope CurrentUser
+          $findings = @(Invoke-ScriptAnalyzer -Path setup -Recurse -Settings PSScriptAnalyzerSettings.psd1) +
+                      @(Invoke-ScriptAnalyzer -Path templates -Recurse -Settings PSScriptAnalyzerSettings.psd1)
+          if ($findings.Count) {
+            $findings | Format-Table RuleName, Severity, ScriptName, Line, Message -AutoSize
+            exit 1
+          }
+          "PSScriptAnalyzer: clean"
+
       - name: unit tests (bash harness)
         run: bash tests/run-tests.sh
 

@@ -42,7 +42,7 @@ if (Test-Path .env) {
 
 if (-not $CacheRef) {
     $dir = Split-Path -Leaf (Get-Location)
-    $CacheRef = "127.0.0.1:5000/$dir:buildcache"
+    $CacheRef = "127.0.0.1:5000/${dir}:buildcache"
 }
 if (-not (Test-Path $Dockerfile)) { throw "Dockerfile not found: $Dockerfile" }
 if ($Push -eq "1" -and -not $Image) { throw "PUSH=1 requires IMAGE=<registry/image:tag>" }
