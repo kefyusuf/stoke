@@ -79,8 +79,10 @@ jobs:
           fetch-depth: 0
       - name: gitleaks (full-history secret scan)
         run: |
+          # image tag: v8.24.3 — bump tag comment + digest together
           docker run --rm -v "$PWD:/repo" \
-            ghcr.io/gitleaks/gitleaks:v8.24.3 detect --source /repo --redact -v
+            ghcr.io/gitleaks/gitleaks@sha256:e1b35e12a8c6fa8901f060459cfb6b2fc4c484d3afbe3b029733a3bbfab07055 \
+            detect --source /repo --redact -v
 
   templates:
     runs-on: ubuntu-latest

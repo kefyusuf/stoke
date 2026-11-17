@@ -11,6 +11,7 @@ All notable changes to stoke. Format loosely follows
 - Executable bit on all shipped `.sh` scripts: a fresh clone can run
   `./setup/*.sh` / `./build.sh` as documented (CI now guards the bits)
 - English README: one link caption was still Turkish
+- gitleaks scan image is digest-pinned (was tag-only, unlike shellcheck)
 
 ## [1.1.0] - 2026-11-15
 
