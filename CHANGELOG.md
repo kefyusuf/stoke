@@ -8,6 +8,8 @@ All notable changes to stoke. Format loosely follows
 
 ### Added
 
+- CI: `ci-ok` aggregation job - one stable merge-gate check covering lint,
+  secrets and the whole template matrix (matrix renames can't weaken the gate)
 - CI: PSScriptAnalyzer lint for the PowerShell scripts (Write-Host excluded
   by design - colored console UI; settings in `PSScriptAnalyzerSettings.psd1`)
 

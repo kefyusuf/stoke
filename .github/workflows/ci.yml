@@ -135,3 +135,20 @@ jobs:
           [ -n "$ok" ] || { docker logs kit-smoke-${{ matrix.template }} || true; exit 1; }
           echo "smoke OK: $(curl -s http://127.0.0.1:3210/)"
           docker stop "kit-smoke-${{ matrix.template }}" >/dev/null
+
+  # Single merge-gate result: branch protection requires THIS job instead of
+  # the individual lint/secrets/matrix names, so adding or renaming templates
+  # never silently weakens the gate.
+  ci-ok:
+    if: always()
+    needs: [lint, secrets, templates]
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Require every CI job to have passed
+        run: |
+          if [[ "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}" == "true" ]]; then
+            echo "::error::one or more required CI jobs failed or were cancelled"
+            exit 1
+          fi
+          echo "all required CI jobs passed"
