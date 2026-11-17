@@ -37,6 +37,12 @@ exec "$@"
 EOF
   "$REAL_CHMOD" +x "$SB_BIN/sudo"
   for c in systemctl apt-get docker gpasswd groupdel rm cp; do stub_cmd "$c" ''; done
+  # optional per-run stubs: TD_EXTRA_STUBS=("name=canned stdout" ...)
+  local spec
+  for spec in ${TD_EXTRA_STUBS[@]+"${TD_EXTRA_STUBS[@]}"}; do
+    stub_cmd "${spec%%=*}" "${spec#*=}"
+  done
+  TD_EXTRA_STUBS=()
   TD_OUT="$( ( export HOME="$SUITE_HOME"
               if [[ -n "${envspec:-}" ]]; then export "${envspec%%=*}"="${envspec#*=}"; fi
               bash "$TEARDOWN" "$@" </dev/null ) 2>&1 3>&1 )"
@@ -119,5 +125,44 @@ printf 'new limits' > "$SUITE_HOME/.wslconfig.bak.20260202-111111"
 td_run "KIT_YES=1" --restore-wslconfig
 t "restore copies the NEWEST backup over .wslconfig" \
   assert_contains "$(sandbox_calls)" "cp $KIT_WSLCONFIG.bak.20260202-111111"
+
+# --- default restore path: the WINDOWS profile, not WSL $HOME -------------------
+# setup-wsl.ps1 backs up %USERPROFILE%\.wslconfig; without KIT_WSLCONFIG the
+# teardown must resolve that profile through WSL interop (cmd.exe + wslpath).
+
+mkdir -p "$SUITE_HOME/winprofile"
+printf 'windows limits' > "$SUITE_HOME/winprofile/.wslconfig.bak.20260303-222222"
+TD_EXTRA_STUBS=('cmd.exe=C:\Users\kitrunner' "wslpath=$SUITE_HOME/winprofile")
+td_run "KIT_WSLCONFIG=" --yes --restore-wslconfig
+t "default restore resolves the Windows profile via interop" \
+  assert_contains "$(sandbox_calls)" "cp $SUITE_HOME/winprofile/.wslconfig.bak.20260303-222222"
+
+# --- windows-context bridge cleanup (only when the bridge was applied) ----------
+
+export KIT_TCP_DROPIN="$SUITE_HOME/kit-tcp.conf"
+td_run "KIT_YES=1"
+t "no bridge drop-in: no bridge cleanup attempted" \
+  assert_eq "0" "$(grep -c 'kit-tcp' <<<"$(sandbox_calls)" || true)"
+
+printf '[Service]\n' > "$KIT_TCP_DROPIN"
+td_run "KIT_YES=1"
+t "removes the kit-tcp.conf drop-in" \
+  assert_contains "$(sandbox_calls)" "rm -f $KIT_TCP_DROPIN"
+t "reloads systemd after drop-in removal" \
+  assert_contains "$(sandbox_calls)" "systemctl daemon-reload"
+t "without Windows interop, points at -Undo for the kit-wsl context" \
+  assert_contains "$TD_OUT" "kit-wsl"
+
+TD_EXTRA_STUBS=('docker.exe=')
+td_run "KIT_YES=1"
+t "removes the Windows-side kit-wsl context via interop" \
+  assert_contains "$(sandbox_calls)" "docker.exe context rm -f kit-wsl"
+
+printf '[Service]\n' > "$KIT_TCP_DROPIN"
+td_run "KIT_DRY_RUN=1"
+t "dry-run previews the drop-in removal" \
+  assert_contains "$TD_OUT" "[DRY-RUN] sudo rm -f $KIT_TCP_DROPIN"
+t "dry-run bridge cleanup executes nothing" \
+  assert_eq "0" "$(grep -c 'kit-tcp' <<<"$(sandbox_calls)" || true)"
 
 suite_done "teardown"

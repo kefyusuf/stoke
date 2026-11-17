@@ -8,7 +8,8 @@
 #   3. verify.sh passes: cold/warm cache speedup + registry cache round trip
 #   4. teardown.sh --dry-run previews, then teardown.sh --yes removes everything
 #      again (the kit's reversibility promise, exercised for real)
-#   5. windows-context.ps1 honors its -DryRun contract on real Windows
+#   5. windows-context.ps1: -DryRun contract AND the real bridge (TCP listener
+#      + Windows 'kit-wsl' context actually serving), then -Undo reverses it
 #
 # The matrix runs the whole path on TWO distros (jammy + noble): distro-side
 # drift (systemd behavior, apt, store images) gets caught as early as the
@@ -77,11 +78,30 @@ jobs:
         run: |
           wsl -d ${{ matrix.distro }} -u kitrunner -- bash -lc "cd ~/work/kit && ./setup/setup-engine.sh --yes"
 
+      # The bridge's REAL path, not just -DryRun: drop-in + listener + Windows
+      # context. Proves fd:// socket activation survives (bare -H fd parses as
+      # a TCP host) and that the unix socket keeps working alongside TCP.
+      - name: windows-context.ps1 real bridge (Windows -> WSL engine)
+        shell: pwsh
+        timeout-minutes: 10
+        run: |
+          ./setup/windows-context.ps1 -Distro ${{ matrix.distro }} -Yes
+          docker --context kit-wsl version
+          wsl -d ${{ matrix.distro }} -u kitrunner -- docker version
+
       - name: verify.sh (cache round trip on real WSL2)
         shell: pwsh
         timeout-minutes: 20
         run: |
           wsl -d ${{ matrix.distro }} -u kitrunner -- bash -lc "cd ~/work/kit && ./setup/verify.sh"
+
+      - name: windows-context.ps1 -Undo (bridge reversal)
+        shell: pwsh
+        timeout-minutes: 10
+        run: |
+          ./setup/windows-context.ps1 -Distro ${{ matrix.distro }} -Undo -Yes
+          if (docker context inspect kit-wsl 2>$null) { throw "kit-wsl context still present after -Undo" }
+          wsl -d ${{ matrix.distro }} -u kitrunner -- docker version
 
       - name: teardown --dry-run, then real teardown, then sanity
         shell: pwsh

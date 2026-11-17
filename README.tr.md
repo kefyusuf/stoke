@@ -11,9 +11,10 @@ English README: [README.md](README.md)
 > ⚠️ **Çalıştırmadan önce okuyun.** Bu scriptler sistem düzeyinde değişiklik yapar
 > (Windows özellikleri, WSL içi apt/systemd, root sahipli dosyalar). Amaçlanan akış
 > oku-sonra-koştur — her scriptin neye dokunduğu: [SECURITY.md](SECURITY.md).
-> Güvenlik ağı hazır: her scriptte `--dry-run` var (önizleme, hiçbir şey değiştirmez),
-> ilk değişiklikten önce planı gösterip `[y/N]` sorar ve işi bitince
-> `setup/teardown.sh` her şeyi geri alır.
+> Güvenlik ağı hazır: her kurulum ve kaldırma scriptinde `--dry-run` var (önizleme,
+> hiçbir şey değiştirmez), ilk değişiklikten önce planı gösterip `[y/N]` sorar ve
+> işi bitince `setup/teardown.sh` kiti geri alır. (`verify.sh` canlı bir benchmark'tır —
+> tasarımı gereği gerçek imajlar derler ve süre ölçer.)
 
 ## Neden
 

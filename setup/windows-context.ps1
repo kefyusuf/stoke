@@ -13,9 +13,13 @@
       3. usage: docker --context kit-wsl ps  |  $env:DOCKER_HOST=...  | VS Code
          settings: "docker.host": "tcp://127.0.0.1:2375"
 
-    SECURITY: the listener binds 127.0.0.1 ONLY, unauthenticated. That is the
-    same trust boundary as docker-group membership (any local process can use
-    it). Never expose it on 0.0.0.0; never forward it across machines.
+    SECURITY: the listener binds 127.0.0.1 ONLY and is UNAUTHENTICATED. Any
+    process that can reach the distro's loopback - including Windows processes
+    via WSL localhost forwarding - gets full daemon access. That is BROADER
+    than docker-group membership (which is per-user). Opt-in by design: prefer
+    in-WSL docker or your IDE's WSL integration when you don't need
+    Windows-native tools. Never expose it on 0.0.0.0; never forward it across
+    machines.
 
     Kit mutation policy: -DryRun previews, -Yes unattended, -Undo reverses
     everything (drop-in + context).
@@ -115,7 +119,7 @@ if ($DryRun) {
     Invoke-InDistro ("mkdir -p '$DropInDir' && cat > '$DropInFile' <<'EOF'" + "`n" +
         "[Service]" + "`n" +
         "ExecStart=" + "`n" +
-        "ExecStart=/usr/bin/dockerd -H fd -H tcp://127.0.0.1:$Port" + "`n" +
+        "ExecStart=/usr/bin/dockerd -H fd:// -H tcp://127.0.0.1:$Port" + "`n" +
         "EOF`n" +
         "systemctl daemon-reload && systemctl restart docker")
 }

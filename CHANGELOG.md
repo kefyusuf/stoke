@@ -13,6 +13,16 @@ All notable changes to stoke. Format loosely follows
 
 ### Fixed
 
+- Windows bridge (`windows-context.ps1`): the drop-in used `-H fd`, which
+  docker/cli parses as a TCP host - the real (non-DryRun) path never worked.
+  Now `-H fd://`, and the nightly E2E exercises the real bridge + `-Undo`
+- `teardown.sh --restore-wslconfig` looked in WSL `$HOME`; it now resolves
+  `%USERPROFILE%` via WSL interop, where `setup-wsl.ps1` writes the backup
+- `teardown.sh` now also reverses the windows-context bridge (kit-tcp.conf
+  drop-in + Windows `kit-wsl` context), closing the "whole kit" reversal gap
+- README/SECURITY: dry-run coverage and the loopback-TCP trust boundary are
+  described as they actually are (no more "every script" / docker-group
+  equivalence overclaims)
 - Windows `build.ps1`: the default CACHE_REF collapsed to `127.0.0.1:5000/` -
   PowerShell parsed `$dir:buildcache` as a drive-qualified variable; now
   `${dir}:buildcache` (caught by the new analyzer lint)

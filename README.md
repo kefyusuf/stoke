@@ -11,9 +11,10 @@ Türkçe README: [README.tr.md](README.tr.md)
 > ⚠️ **Review before running.** These scripts make system-level changes (Windows
 > features, apt/systemd inside WSL, root-owned files). The intended workflow is
 > read-then-run — [SECURITY.md](SECURITY.md) lists exactly what each script touches.
-> Safety net built in: every script has `--dry-run` (preview, changes nothing),
-> shows its plan and asks `[y/N]` before the first change, and
-> `setup/teardown.sh` reverses the whole kit when you want out.
+> Safety net built in: every setup and teardown script has `--dry-run` (preview,
+> changes nothing), shows its plan and asks `[y/N]` before the first change, and
+> `setup/teardown.sh` reverses the kit when you want out. (`verify.sh` is a live
+> benchmark — it builds and times real images by design.)
 
 ## Why
 

@@ -18,7 +18,8 @@ anything, read it — that is the intended workflow, not paranoia:
 | `setup/setup-engine.sh` | apt repositories + packages (Docker's official repo), `/etc/wsl.conf`, docker group | sudo |
 | `setup/setup-nerdctl.sh` | apt packages, tarballs into `/usr/local`, systemd services | sudo |
 | `setup/protect-distro.sh fix` | removes Desktop-injected files, masks units, creates a docker context | sudo |
-| `setup/teardown.sh` | reverse of everything above: containers down, services off, group out, packages purged, apt repo files removed; `/var/lib/docker` and `.wslconfig` only with `--purge-data` / `--restore-wslconfig` | sudo |
+| `setup/windows-context.ps1` | systemd drop-in in the distro: **unauthenticated** loopback-only TCP listener (127.0.0.1:2375) + Windows docker context `kit-wsl`; opt-in, `-Undo` reverses both | Administrator (Windows) / root (distro) |
+| `setup/teardown.sh` | reverse of everything above: containers down, contexts + bridge drop-in removed, services off, group out, packages purged, apt repo files removed; `/var/lib/docker` and `.wslconfig` only with `--purge-data` / `--restore-wslconfig` | sudo |
 | `cache-stack/*` | local Docker containers bound to `127.0.0.1` only | docker |
 
 Hardening already built in:
@@ -26,10 +27,14 @@ Hardening already built in:
 - Every WSL-side script **refuses to run outside WSL2** (WSL1 gets the
   conversion command; native Linux needs the explicit `KIT_ALLOW_LINUX=1`
   override) — see `setup/lib/common.sh`, verified by tests.
-- Every mutation goes through `kit_run`; every mutating script shows a plan
-  and asks for consent first. `KIT_DRY_RUN=1` (or `--dry-run`) prints every
-  change and executes nothing; `KIT_YES=1` (or `--yes`) runs unattended.
-- `setup/teardown.sh` reverses every mutation in the table above, with data
+- The setup and teardown scripts route every mutation through `kit_run`, show
+  a plan and ask for consent first. `KIT_DRY_RUN=1` (or `--dry-run`) prints
+  every change and executes nothing; `KIT_YES=1` (or `--yes`) runs unattended.
+  Exceptions: `protect-distro.sh fix` honors `KIT_DRY_RUN=1` (not the flag);
+  `verify.sh` is a live benchmark and builds by design.
+- `setup/teardown.sh` reverses every mutation in the table above (the
+  Windows-side `kit-wsl` context via interop when a Windows docker CLI is
+  reachable, otherwise it points at `windows-context.ps1 -Undo`), with data
   and config deletes strictly opt-in.
 - All downloaded tarballs are **sha256-pinned per architecture** and verified
   before extraction (`setup-nerdctl.sh`).

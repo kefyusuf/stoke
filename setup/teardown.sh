@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Removes everything the kit's setup scripts installed - the mirror of the
 # SECURITY.md touch table, in reverse-safe order:
-#   containers down -> docker context rm -> services off -> group out ->
-#   packages purge -> apt repo files rm -> optional .wslconfig restore
+#   containers down -> contexts rm -> bridge drop-in rm -> services off ->
+#   group out -> packages purge -> apt repo files rm -> optional .wslconfig restore
 #
 # Kit-wide mutation policy: --dry-run / KIT_DRY_RUN=1 previews every reversal
 # without executing; --yes / KIT_YES=1 runs unattended.
@@ -70,13 +70,25 @@ if [[ -z "$TARGET_USER" ]]; then
 fi
 [[ -n "$TARGET_USER" ]] || { warn "Cannot determine the invoking user (SUDO_USER/USER/id all unavailable)."; exit 1; }
 
-WSLCONFIG="${KIT_WSLCONFIG:-${HOME:-/root}/.wslconfig}"
+# setup-wsl.ps1 backs up %USERPROFILE%\.wslconfig (Windows side). Resolve that
+# profile through WSL interop; fall back to $HOME when interop is unavailable.
+kit_wslconfig_default() {
+  local win_home=""
+  if command -v cmd.exe >/dev/null 2>&1 && command -v wslpath >/dev/null 2>&1; then
+    win_home="$(wslpath -u "$(cmd.exe /c 'echo %USERPROFILE%' 2>/dev/null | tr -d '\r')" 2>/dev/null || true)"
+  fi
+  printf '%s\n' "${win_home:+$win_home/.wslconfig}"
+}
+WSLCONFIG="${KIT_WSLCONFIG:-$(kit_wslconfig_default)}"
+WSLCONFIG="${WSLCONFIG:-${HOME:-/root}/.wslconfig}"
 DATA_ROOT="${KIT_DOCKER_DATA_ROOT:-/var/lib/docker}"
+TCP_DROPIN="${KIT_TCP_DROPIN:-/etc/systemd/system/docker.service.d/kit-tcp.conf}"
 
 # --- plan + consent ---------------------------------------------------------------
 kit_consent "teardown plan (user: $TARGET_USER):
   - containers: compose down for cache-stack (registry + mirror)
   - docker: remove context 'kit-engine'
+  - bridge: remove kit-tcp.conf drop-in + Windows 'kit-wsl' context (if present)
   - systemd: disable docker + docker.socket
   - group: remove $TARGET_USER from docker, delete the group
   - apt: purge docker-ce, CLI, containerd.io, buildx, compose plugin
@@ -93,6 +105,19 @@ fi
 
 # 2. the kit's pinned client context
 kit_run docker context rm -f kit-engine 2>/dev/null || true
+
+# 2b. windows-context bridge remnants, only if the bridge was applied.
+# The drop-in lives in the distro; the 'kit-wsl' context lives on WINDOWS,
+# reachable through interop (docker.exe) when a Windows CLI is installed.
+if [[ -f "$TCP_DROPIN" ]]; then
+  kit_run sudo rm -f "$TCP_DROPIN"
+  kit_run sudo systemctl daemon-reload
+  if command -v docker.exe >/dev/null 2>&1; then
+    kit_run docker.exe context rm -f kit-wsl 2>/dev/null || true
+  else
+    warn "Windows-side context 'kit-wsl' may remain - run setup/windows-context.ps1 -Undo on Windows"
+  fi
+fi
 
 # 3. services
 kit_run sudo systemctl disable --now docker docker.socket 2>/dev/null || true
