@@ -21,6 +21,13 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      # The README promises `./setup/foo.sh`; a fresh Linux/WSL clone only
+      # honors that if the executable bit is committed (mode 100755).
+      - name: exec bits (every tracked .sh must be executable)
+        run: |
+          git ls-files -s -- '*.sh' | \
+            awk '$1 != "100755" { print "not executable: " $4; bad=1 } END { exit bad }'
+
       - name: shellcheck (all shipped scripts, style severity)
         run: |
           docker run --rm -v "$PWD:/wk" -w /wk koalaman/shellcheck:stable@sha256:bb596a0d169b85ddd81d8b6d3a2ff6d5baf5fca10b97f575ebc647c3dff62b3d \

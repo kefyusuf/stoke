@@ -4,6 +4,36 @@ All notable changes to stoke. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions are semver-ish
 (the kit is scripts + templates, so "breaking" = a template/setup contract change).
 
+## [Unreleased]
+
+### Fixed
+
+- Executable bit on all shipped `.sh` scripts: a fresh clone can run
+  `./setup/*.sh` / `./build.sh` as documented (CI now guards the bits)
+- English README: one link caption was still Turkish
+
+## [1.1.0] - 2026-11-15
+
+### Added
+
+- Attested release pipeline: `v*` tags publish a source tarball + sha256
+  checksums + in-toto build-provenance attestations (keyless, GitHub
+  OIDC/Sigstore) - ritual in [docs/releasing.md](docs/releasing.md)
+- dependency-review PR gate (fails on high-severity dependency changes)
+- OpenSSF Scorecard workflow + README badge; least-privilege workflow
+  tokens; digest-pinned shellcheck image
+- CODEOWNERS, Discussions for Q&A, private vulnerability reporting,
+  documented response expectations
+- Nightly E2E triage SOP in CONTRIBUTING
+
+### Fixed
+
+- ci shellcheck invocation (the never-run workflow shipped a container
+  pattern that could not resolve files inside the image)
+- setup-engine.sh: apt lists refresh after adding the docker repo
+  (caught by the first real windows-e2e run)
+- node-ts template: pnpm via npm (Node >= 25 images dropped corepack)
+
 ## [1.0.0] - 2026-11-15
 
 First public release.
@@ -50,28 +80,6 @@ First public release.
 - SIGPIPE (rc 141) when piping into `kit_run ... tee` in dry-run mode; file
   writes use the herestring pattern (documented in the lib)
 
-## [1.1.0] - 2026-11-15
-
-### Added
-
-- Attested release pipeline: `v*` tags publish a source tarball + sha256
-  checksums + in-toto build-provenance attestations (keyless, GitHub
-  OIDC/Sigstore) - ritual in [docs/releasing.md](docs/releasing.md)
-- dependency-review PR gate (fails on high-severity dependency changes)
-- OpenSSF Scorecard workflow + README badge; least-privilege workflow
-  tokens; digest-pinned shellcheck image
-- CODEOWNERS, Discussions for Q&A, private vulnerability reporting,
-  documented response expectations
-- Nightly E2E triage SOP in CONTRIBUTING
-
-### Fixed
-
-- ci shellcheck invocation (the never-run workflow shipped a container
-  pattern that could not resolve files inside the image)
-- setup-engine.sh: apt lists refresh after adding the docker repo
-  (caught by the first real windows-e2e run)
-- node-ts template: pnpm via npm (Node >= 25 images dropped corepack)
-
 ## 0.1.0 - 2026-11-05 (pre-public history)
 
 First public release.
@@ -106,5 +114,5 @@ First public release.
 - Docker Desktop can stay installed (idle or parallel) — see
   [docs/migration.md](docs/migration.md)
 
-[1.0.0]: https://github.com/kefyusuf/stoke/releases/tag/v1.0.0
 [1.1.0]: https://github.com/kefyusuf/stoke/releases/tag/v1.1.0
+[1.0.0]: https://github.com/kefyusuf/stoke/releases/tag/v1.0.0
