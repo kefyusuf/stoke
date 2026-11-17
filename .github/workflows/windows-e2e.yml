@@ -87,6 +87,7 @@ jobs:
         run: |
           ./setup/windows-context.ps1 -Distro ${{ matrix.distro }} -Yes
           docker --context kit-wsl version
+          if ($LASTEXITCODE -ne 0) { throw "kit-wsl context does not serve the engine" }
           wsl -d ${{ matrix.distro }} -u kitrunner -- docker version
 
       - name: verify.sh (cache round trip on real WSL2)
@@ -100,7 +101,10 @@ jobs:
         timeout-minutes: 10
         run: |
           ./setup/windows-context.ps1 -Distro ${{ matrix.distro }} -Undo -Yes
-          if (docker context inspect kit-wsl 2>$null) { throw "kit-wsl context still present after -Undo" }
+          # exit-code check, not output truthiness: 2>$null under EAP=Stop leaks
+          # native stderr into the output and fakes a "still present" result
+          docker context inspect kit-wsl *>$null
+          if ($LASTEXITCODE -eq 0) { throw "kit-wsl context still present after -Undo" }
           wsl -d ${{ matrix.distro }} -u kitrunner -- docker version
 
       - name: teardown --dry-run, then real teardown, then sanity

@@ -48,7 +48,11 @@ $Port = 2375
 
 # --- distro presence -------------------------------------------------------------
 
+# With EAP=Stop, 2>$null leaks native stderr into captured output - relax EAP
+# for the capture only (stdout must survive; *>$null would swallow it too).
+$ErrorActionPreference = "Continue"
 $distros = @((wsl -l -q) 2>$null) | ForEach-Object { ($_ -replace "\x00", "").Trim() } | Where-Object { $_ }
+$ErrorActionPreference = "Stop"
 if ($distros -notcontains $Distro) {
     throw "WSL distro '$Distro' not found (installed: $($distros -join ', '))."
 }
@@ -92,7 +96,10 @@ function Invoke-InDistro {
 $contextExists = $false
 $dockerCmd = Get-Command docker -ErrorAction SilentlyContinue
 if ($dockerCmd) {
-    $contextExists = [bool](& docker context inspect kit-wsl 2>$null)
+    # Exit-code check, NOT output truthiness: with $ErrorActionPreference="Stop",
+    # 2>$null leaks native stderr into the captured output (false "exists").
+    & docker context inspect kit-wsl *>$null
+    $contextExists = ($LASTEXITCODE -eq 0)
 }
 
 # --- undo ------------------------------------------------------------------------------
@@ -103,7 +110,7 @@ if ($Undo) {
     Invoke-InDistro "rm -f '$DropInFile' && systemctl daemon-reload && systemctl restart docker"
     if ($dockerCmd) {
         Write-Host "Removing docker context 'kit-wsl'..." -ForegroundColor Cyan
-        & docker context rm -f kit-wsl 2>$null
+        & docker context rm -f kit-wsl *>$null
     }
     Write-Host "Undo complete. Windows-side docker goes back to its previous context." -ForegroundColor Green
     return
@@ -146,7 +153,8 @@ if (-not $dockerCmd) {
     } elseif ($DryRun) {
         Write-Host "[DRY-RUN] docker context create kit-wsl --docker host=tcp://127.0.0.1:$Port" -ForegroundColor Yellow
     } else {
-        & docker context create kit-wsl --docker "host=tcp://127.0.0.1:$Port" | Out-Null
+        & docker context create kit-wsl --docker "host=tcp://127.0.0.1:$Port" *>$null
+        if ($LASTEXITCODE -ne 0) { throw "docker context create kit-wsl failed (exit $LASTEXITCODE)." }
         Write-Host "docker context 'kit-wsl' created." -ForegroundColor Green
     }
     if ($SetDefault -and -not $DryRun) {

@@ -64,7 +64,11 @@ if (-not $wslCmd) {
 
 # --- distro ------------------------------------------------------------------
 # wsl -l -q outputs UTF-16 on some builds -> strip null chars defensively.
+# With EAP=Stop, 2>$null leaks native stderr into captured output - relax EAP
+# for the capture only (stdout must survive; *>$null would swallow it too).
+$ErrorActionPreference = "Continue"
 $distros = @((wsl -l -q) 2>$null) | ForEach-Object { ($_ -replace "\x00", "").Trim() } | Where-Object { $_ }
+$ErrorActionPreference = "Stop"
 $installed = $distros | Where-Object { $_ -eq $Distro }
 if (-not $installed) {
     if ($DryRun) {
@@ -117,7 +121,7 @@ if ($DryRun) {
     Write-Host "[DRY-RUN] wsl --shutdown (to apply settings at next start)" -ForegroundColor Yellow
 } else {
     Write-Host "Shutting down WSL so settings apply at next start..." -ForegroundColor Cyan
-    wsl --shutdown 2>$null
+    wsl --shutdown *>$null
 }
 
 if ($DryRun) {

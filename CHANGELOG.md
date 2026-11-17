@@ -21,6 +21,14 @@ All notable changes to stoke. Format loosely follows
 
 ### Fixed
 
+- `windows-context.ps1`: context existence was checked via output truthiness
+  of `docker context inspect ... 2>$null` - under `$ErrorActionPreference="Stop"`
+  pwsh leaks native stderr into the captured output, so an ABSENT context read
+  as "exists": the bridge never created it and `-Undo`'s e2e assertion
+  false-positived (caught by the nightly windows-e2e). All context checks are
+  now exit-code based (`*>$null` + `$LASTEXITCODE`); context creation failures
+  throw; the e2e bridge step fails fast. Same-class `2>$null` captures in
+  `setup-wsl.ps1` fixed too
 - Windows bridge (`windows-context.ps1`): the drop-in used `-H fd`, which
   docker/cli parses as a TCP host - the real (non-DryRun) path never worked.
   Now `-H fd://`, and the nightly E2E exercises the real bridge + `-Undo`
