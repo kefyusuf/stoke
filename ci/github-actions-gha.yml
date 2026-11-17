@@ -5,6 +5,19 @@
 # - cache does NOT cross repos; fork PRs get their own scope
 # - slightly slower than registry cache for large graphs (tarball round trip)
 #
+# Cache trust policy (why PR exports are safe HERE, unlike a shared registry
+# tag): GitHub isolates cache writes per branch. A regular pull_request run
+# (merge ref) can READ the base/default-branch cache but only WRITES its own
+# branch scope - it can never refresh the default branch's cache.
+# - Read-only triggers: issue_comment, pull_request_target, and pull_request
+#   with types: [closed] run in the default-branch context with READ-ONLY
+#   cache access; cache-to fails there ("failed to reserve cache"). On those
+#   events keep cache-from and omit cache-to (or add ignore-error=true);
+#   the default-branch push workflow populates the shared cache.
+# - The default scope is `buildkit`: multiple images in one repo overwrite
+#   each other's cache. Give each image its own scope=<name> (this repo's
+#   .github/workflows/ci.yml uses scope=kit-<template>-<target>).
+#
 # Local builds CANNOT share this cache (it's CI-only). If local<->CI sharing
 # matters, use ci/github-actions.yml (type=registry) instead.
 #

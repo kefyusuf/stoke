@@ -8,6 +8,12 @@ All notable changes to stoke. Format loosely follows
 
 ### Added
 
+- Cache trust policy, documented and pinned: `docs/cache-guide.md` gains a
+  "Cache trust policy" section (one trusted writer per shared ref; PR/MR
+  import-only on the registry backend; GHA branch isolation, read-only
+  triggers and the `buildkit` default-scope pitfall); the gha CI template
+  carries the policy notes; build wrappers declare their trusted-local trust
+  boundary; new `tests/test-ci-cache-policy.sh` guards the contracts
 - Ownership manifest: `setup-engine.sh` snapshots the pre-install state into
   `/var/lib/stoke/ownership.env` (first mutation, never overwritten on re-run)
   and reuses a pre-existing Docker Engine instead of reinstalling;

@@ -91,6 +91,50 @@ RUN --mount=type=cache,target=/root/.cache \
 
 Local and CI **must share the same ref** for the handoff to work — that's the whole point.
 
+## Cache trust policy
+
+**Cache write access is a trust boundary.** BuildKit trusts the layers it imports:
+content-addressing keys a layer by its *inputs*, not by who produced it. Anyone who
+can write to the cache ref can export crafted layers that later builds will reuse.
+"Who may `cache-to`?" matters as much as "who may push the image?".
+
+The kit's policy — **one trusted writer per shared ref**:
+
+| Context | Reads (`cache-from`) | Writes (`cache-to`) |
+|---|---|---|
+| Local dev (`build.sh` / `build.ps1`) | yes | yes — your machine, your registry credentials |
+| CI, default branch | yes | **yes — the only CI writer** |
+| CI, pull request / merge request | yes | **no** (registry backend) |
+
+- `ci/github-actions.yml` and `ci/gitlab-ci.yml` implement this literally: the
+  PR/MR job imports only; the default-branch job refreshes `:buildcache`. A broken
+  or hostile PR can never poison the shared cache.
+- Fork PRs additionally cannot even *read* a private GHCR cache manifest (their
+  `GITHUB_TOKEN` is read-only and scoped to the fork) — they build cold.
+- The wrappers always export (`mode=max`): they are **trusted-local tools**. Run
+  them only on checkouts you trust; never hand shared-ref write credentials to
+  untrusted code.
+
+### GitHub-native cache (`type=gha`) is different
+
+GitHub's cache service isolates writes per branch, so the gha template safely
+exports on PRs too:
+
+- A regular `pull_request` run (merge ref) reads the base/default-branch cache but
+  writes only its **own branch scope** — it can never refresh the default branch's
+  cache. Fork PRs get their own isolated scope.
+- **Read-only triggers**: `issue_comment`, `pull_request_target`, and
+  `pull_request` with `types: [closed]` run in the default-branch context with
+  read-only cache access — `cache-to` fails there ("failed to reserve cache").
+  Keep `cache-from`, omit `cache-to` (or set `ignore-error=true`), and let the
+  default-branch push populate the cache.
+- The **default scope is `buildkit`**: two images built in one repo overwrite each
+  other's cache. Give each image its own `scope=<name>` (this repo's CI uses
+  `scope=kit-<template>-<target>`).
+
+Sources: [Docker — GHA cache backend](https://docs.docker.com/build/cache/backends/gha/),
+[Docker — cache write restrictions](https://docs.docker.com/build/ci/github-actions/cache/#cache-write-restrictions).
+
 ## Cache hygiene
 
 - The shared ref grows over time; periodically re-create it from a clean builder or point

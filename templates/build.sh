@@ -13,6 +13,11 @@
 # so two projects never share one cache ref by accident.
 #
 # Keys: CACHE_REF, IMAGE, PUSH, DOCKERFILE, CONTEXT
+#
+# Trust: this wrapper ALWAYS exports cache (mode=max). It is a trusted-local
+# tool - run it only on checkouts you trust, with registry credentials you
+# control. Never hand shared-ref write credentials to untrusted code; in CI,
+# use the import-only PR pattern in ci/github-actions.yml.
 set -euo pipefail
 
 CACHE_REF="${CACHE_REF:-}"

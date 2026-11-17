@@ -93,6 +93,50 @@ RUN --mount=type=cache,target=/root/.cache \
 
 El sıkışmanın çalışması için yerel ve CI **aynı ref'i paylaşmalı** — zaten tüm nokta bu.
 
+## Cache güven politikası
+
+**Cache yazma erişimi bir güven sınırıdır.** BuildKit import ettiği katmanlara güvenir:
+content-addressing bir katmanı *girdileriyle* anahtarlar, üretenle değil. Cache ref'ine
+yazabilen herkes, sonraki build'lerin yeniden kullanacağı sahte katmanlar export edebilir.
+"`cache-to` kimde?" sorusu, "imajı kim push'layabilir?" kadar önemlidir.
+
+Kit'in politikası — **paylaşılan ref başına tek güvenilir yazar**:
+
+| Bağlam | Okuma (`cache-from`) | Yazma (`cache-to`) |
+|---|---|---|
+| Yerel geliştirme (`build.sh` / `build.ps1`) | evet | evet — sizin makineniz, sizin registry credential'ınız |
+| CI, default branch | evet | **evet — tek CI yazarı** |
+| CI, pull request / merge request | evet | **hayır** (registry backend) |
+
+- `ci/github-actions.yml` ve `ci/gitlab-ci.yml` bunu birebir uygular: PR/MR job'ı
+  yalnız import eder; `:buildcache`'i default-branch job'ı tazeler. Bozuk ya da
+  kötü niyetli bir PR paylaşılan cache'i asla zehirleyemez.
+- Fork PR'ları ayrıca özel bir GHCR cache manifest'ini *okuyamaz* bile
+  (`GITHUB_TOKEN`'ları salt-okunur ve fork'a kapsamlıdır) — soğuk build alırlar.
+- Wrapper'lar her zaman export eder (`mode=max`): onlar **güvenilir-yerel araçlardır**.
+  Yalnız güvendiğiniz checkout'larda çalıştırın; paylaşılan ref'in yazma
+  credential'ını asla güvenilmeyen koda vermeyin.
+
+### GitHub-native cache (`type=gha`) farklıdır
+
+GitHub'ın cache servisi yazmaları branch başına izole eder; bu yüzden gha şablonu
+PR'larda da güvenle export eder:
+
+- Normal bir `pull_request` koşusu (merge ref) base/default-branch cache'ini okur
+  ama yalnız **kendi branch scope'una** yazar — default branch'in cache'ini asla
+  tazeleyemez. Fork PR'ları kendi izole scope'larını alır.
+- **Salt-okunur tetikleyiciler**: `issue_comment`, `pull_request_target` ve
+  `types: [closed]` ile `pull_request`, default-branch bağlamında salt-okunur cache
+  erişimiyle çalışır — `cache-to` orada başarısız olur ("failed to reserve cache").
+  `cache-from`'u tutun, `cache-to`'yu çıkarın (ya da `ignore-error=true` ekleyin);
+  cache'i default-branch push'u doldursun.
+- **Default scope `buildkit`'tir**: aynı repoda iki imaj birbirinin cache'ini ezer.
+  Her imaja kendi `scope=<ad>`ını verin (bu reponun CI'ı
+  `scope=kit-<template>-<target>` kullanır).
+
+Kaynaklar: [Docker — GHA cache backend](https://docs.docker.com/build/cache/backends/gha/),
+[Docker — cache write restrictions](https://docs.docker.com/build/ci/github-actions/cache/#cache-write-restrictions).
+
 ## Cache hijyeni
 
 - Paylaşımlı ref zamanla büyür; ara sıra temiz bir builder'dan yeniden oluştur veya CI'yi

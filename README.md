@@ -153,7 +153,7 @@ For CI, wire the same `CACHE_REF` into your pipeline — ready-made templates ar
 | `templates/rust/` | Runnable Rust sample: dummy-crate deps stage, cargo cache mounts, musl static binary |
 | `templates/go/` | Runnable Go sample: GOMODCACHE/GOCACHE mounts, `scratch` prod image |
 | `ci/` | GitHub Actions (registry & gha cache) and GitLab CI templates |
-| `tests/` | Zero-dependency unit suite for the scripts' guard/dry-run/consent/ownership/teardown contracts (runs in CI) |
+| `tests/` | Zero-dependency unit suite for the scripts' guard/dry-run/consent/ownership/teardown/cache-policy contracts (runs in CI) |
 | `docs/` | Evidence, deep-dive guides, FAQ |
 
 ## Documentation

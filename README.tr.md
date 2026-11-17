@@ -152,7 +152,7 @@ CI tarafı için aynı `CACHE_REF` değerini pipeline'a bağla — hazır şablo
 | `templates/rust/` | Çalışan Rust örneği: dummy-crate deps stage, cargo cache mount'ları, musl statik binary |
 | `templates/go/` | Çalışan Go örneği: GOMODCACHE/GOCACHE mount'ları, `scratch` prod imajı |
 | `ci/` | GitHub Actions (registry ve gha cache) ve GitLab CI şablonları |
-| `tests/` | Scriptlerin guard/dry-run/consent/ownership/teardown sözleşmeleri için sıfır-bağımlılık birim testleri (CI'da çalışır) |
+| `tests/` | Scriptlerin guard/dry-run/consent/ownership/teardown/cache-policy sözleşmeleri için sıfır-bağımlılık birim testleri (CI'da çalışır) |
 | `docs/` | Kanıtlar, derinlemesine rehberler, SSS |
 
 ## Dokümantasyon
